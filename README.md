@@ -37,7 +37,7 @@ chbs = "0.0.1"
 ```
 
 Generate a passphrase using the helper function consisting of 5 words
-([passphrase.rs](examples/passphrase.rs)):
+([passphrase.rs](examples/passphrase.rs), `cargo run --example passphrase`):
 
 ```rust
 extern crate chbs;
@@ -47,7 +47,7 @@ println!("Passphrase: {:?}", passphrase(5));
 ```
 
 Use a word sampler to generate an infinite number of random words
-([sampler.rs](examples/sampler.rs)):
+([sampler.rs](examples/sampler.rs), `cargo run --example sampler`):
 
 ```rust
 extern crate chbs;
