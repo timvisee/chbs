@@ -1,17 +1,30 @@
-# Correct Horse Battery Staple
-A crate for secure passphrase generation based on a wordlist.
-This library uses cryptographically secure randomization, and may be used
-for generating secret passphrases.
+# Rust library: Correct Horse Battery Staple
+A crate providing secure passphrase generation based on a wordlist also known as
+[diceware].
 
 [![xkcd-img]][xkcd]
 
+The name `chbs` is short for the well known "Correct Horse Battery Staple"
+password which originates from the [XKCD][xkcd] comic shown above.
+
+This library uses cryptographically secure randomization, and may be used
+for generating secret passphrases.
+
 Notes:
 * this crate is still in development, and should thus be used with care
-* no waranty is provided for the quality of the passwords generated
+* no warranty is provided for the quality of the passwords generated
   through this library
 
-[xkcd]: https://xkcd.com/936/
-[xkcd-img]: https://imgs.xkcd.com/comics/password_strength.png
+TODO before stabilization which will require API changes:
+* use secure strings
+* allow using custom wordlists
+* ability to configure various passphrase generation properties:
+  * random word capitalisation
+  * add numbers
+  * add special characters
+  * different separators
+  * unique words
+* calculate entropy
 
 ## Examples
 Here are some basic examples on how to use this crate.
@@ -27,7 +40,7 @@ println!("Passphrase: {:?}", passphrase(5));
 ```
 
 Use a word sampler to generate an infinite number of random words
-((sampler.rs)[examples/sampler.rs]):
+([sampler.rs](examples/sampler.rs)):
 
 ```rust
 extern crate chbs;
@@ -43,3 +56,11 @@ for i in 0..8 {
     );
 }
 ```
+
+## License
+This project is released under the MIT license.
+Check out the [LICENSE](LICENSE) file for more information.
+
+[diceware]: https://en.wikipedia.org/wiki/Diceware
+[xkcd]: https://xkcd.com/936/
+[xkcd-img]: https://imgs.xkcd.com/comics/password_strength.png
