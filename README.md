@@ -1,3 +1,15 @@
+[![Build status on GitLab CI][gitlab-ci-master-badge]][gitlab-ci-link]
+[![Newest release on crates.io][crate-version-badge]][crate-link]
+[![Number of downloads on crates.io][crate-download-badge]][crate-link]
+[![Project license][crate-license-badge]](LICENSE)
+
+[crate-link]: https://crates.io/crates/chbs
+[crate-download-badge]: https://img.shields.io/crates/d/chbs.svg
+[crate-version-badge]: https://img.shields.io/crates/v/chbs.svg
+[crate-license-badge]: https://img.shields.io/crates/l/chbs.svg
+[gitlab-ci-link]: https://gitlab.com/timvisee/chbs/commits/master
+[gitlab-ci-master-badge]: https://gitlab.com/timvisee/chbs/badges/master/pipeline.svg
+
 # Rust library: Correct Horse Battery Staple
 A crate providing secure passphrase generation based on a wordlist also known as
 [diceware].
