@@ -28,7 +28,14 @@
 //!
 //! ## Examples
 //! Here are some basic examples on how to use this crate.
-//
+//!
+//! Add `chbs` as dependency in your `Cargo.toml` first:
+//! 
+//! ```toml
+//! [dependencies]
+//! chbs = "0.0.1"
+//! ```
+//!
 //! Generate a passphrase using the helper function consisting of 5 words
 //! ([passphrase.rs](examples/passphrase.rs)):
 //!
