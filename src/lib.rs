@@ -1,3 +1,33 @@
+//! # Correct Horse Battery Staple
+//! A crate for secure passphrase generation based on a wordlist.
+//!
+//! ## Generating a passphrase
+//! To generate a secure passphrase, the helper function `passphrase` can be
+//! used. Specify the number of words the passphrase must consist of,
+//! and generate a passphrase string.
+//!
+//! ```rust
+//! extern crate chbs;
+//! use chbs::passphrase;
+//!
+//! println!("Passphrase: {:?}", passphrase(5));
+//! ```
+//!
+//! ## Generate random words
+//! A word sampler can be created to generate an infinite number of
+//! cryptographically secure random words based on the included wordlist.
+//!
+//! ```rust
+//! extern crate chbs;
+//! use chbs::word_sampler;
+//!
+//! let sampler = word_sampler();
+//!
+//! for (i, word) in (0..8).enumerate() {
+//!     println!("Sampled word #{}: {:?}", i, word);
+//! }
+//! ```
+
 extern crate rand;
 
 use rand::{
@@ -32,6 +62,23 @@ pub fn words<'a>() -> Vec<&'a str> {
 /// The word sampler is concidered cryptographically secure.
 pub fn word_sampler<'a>() -> WordSampler<'a> {
     WordSampler::new(words())
+}
+
+/// Generate a secure passphrase with the given number of words.
+/// It is recommended to use 4 or more words when possible.
+///
+/// # Panics
+/// 
+/// The number of words must at least be 1.
+pub fn passphrase(words: usize) -> String {
+    if words == 0 {
+        panic!("it is not allowed to generate a passphrase with 0 words");
+    }
+
+    word_sampler()
+        .take(words)
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 /// A word sampler iterator that provides random words from a given wordlist.
@@ -73,7 +120,7 @@ impl<'a> Iterator for WordSampler<'a> {
 
 #[cfg(test)]
 mod tests {
-    use {words, WordSampler, word_sampler};
+    use {passphrase, words, WordSampler, word_sampler};
 
     /// How many times to iterate for small or infinite tests.
     const ITERS: usize = 32;
@@ -100,6 +147,21 @@ mod tests {
                 )
             )
         );
+    }
+
+    /// Generating a passphrase must produce the correct number of words.
+    #[test]
+    fn passphrase_words() {
+        for i in 1..=ITERS {
+            assert_eq!(passphrase(i).split(char::is_whitespace).count(), i);
+        }
+    }
+
+    /// Generating a passphrase with 0 words should panic.
+    #[test]
+    #[should_panic]
+    fn empty_passphrase_panic() {
+        passphrase(0);
     }
 
     /// Ensure a word sampler is able to produce words.:w
