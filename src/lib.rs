@@ -21,10 +21,14 @@
 //! extern crate chbs;
 //! use chbs::word_sampler;
 //!
-//! let sampler = word_sampler();
+//! let mut sampler = word_sampler();
 //!
-//! for (i, word) in (0..8).enumerate() {
-//!     println!("Sampled word #{}: {:?}", i, word);
+//! for i in 0..8 {
+//!     println!(
+//!         "Sampled word #{}: {:?}",
+//!         i,
+//!         sampler.next().unwrap(),
+//!     );
 //! }
 //! ```
 
