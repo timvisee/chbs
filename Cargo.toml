@@ -1,0 +1,6 @@
+[package]
+name = "chbs"
+version = "0.0.1"
+authors = ["timvisee <timvisee@gmail.com>"]
+
+[dependencies]
