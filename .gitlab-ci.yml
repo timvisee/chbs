@@ -1,0 +1,45 @@
+image: "rust:slim"
+
+stages:
+  - check
+  - build
+  - release
+
+variables:
+  RUST_VERSION: stable
+
+# Install the proper Rust compiler version
+before_script:
+  - |
+    rustup install $RUST_VERSION
+    rustup default $RUST_VERSION
+  - |
+    rustc --version
+    cargo --version
+
+# Variable defaults
+variables:
+  RUST_VERSION: stable
+
+# Check on stable, beta and nightly 
+.check-base: &check-base
+  stage: check
+  script:
+    - cargo check --verbose
+    - cargo test --verbose
+rust-stable:
+  <<: *check-base
+rust-beta:
+  <<: *check-base
+  variables:
+    RUST_VERSION: beta
+rust-nightly:
+  <<: *check-base
+  variables:
+    RUST_VERSION: nightly
+
+# Build using Rust stable
+build:
+  stage: build
+  script:
+    - cargo build --release --verbose
