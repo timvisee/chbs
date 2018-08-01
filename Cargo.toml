@@ -1,7 +1,26 @@
 [package]
 name = "chbs"
 version = "0.0.1"
-authors = ["timvisee <timvisee@gmail.com>"]
+authors = ["Tim Visee <timvisee@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://gitlab.com/timvisee/chbs"
+repository = "https://gitlab.com/timvisee/chbs"
+documentation = "https://docs.rs/chbs"
+description = "A crate providing secure passphrase generation based on a wordlist"
+keywords = [
+    "correct-horse-battery-staple",
+    "diceware",
+    "password-generator",
+    "password",
+]
+categories = [
+    "cryptography",
+]
+maintenance = "experimental"
+
+[badges]
+gitlab = { repository = "timvisee/chbs", branch = "master" }
 
 [dependencies]
 rand = "0.5"
