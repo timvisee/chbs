@@ -5,13 +5,9 @@ extern crate chbs;
 use chbs::word_sampler;
 
 fn main() {
-    let mut sampler = word_sampler();
+    let sampler = word_sampler();
 
-    for i in 0..8 {
-        println!(
-            "Sampled word #{}: {:?}",
-            i,
-            sampler.next().unwrap(),
-        );
+    for word in sampler.take(8) {
+        println!("Sampled word: {:?}", word);
     }
 }

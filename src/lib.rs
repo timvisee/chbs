@@ -4,7 +4,7 @@
 //! 
 //! [![xkcd-img]][xkcd]
 //!
-//! The name `chbs` is short for the well known "Correct Horse Battery Staple"
+//! The name `chbs` is short for the well known "correct horse battery staple"
 //! password which originates from the [XKCD][xkcd] comic shown above.
 //! 
 //! This library uses cryptographically secure randomization, and may be used
@@ -37,7 +37,7 @@
 //! ```
 //!
 //! Generate a passphrase using the helper function consisting of 5 words
-//! ([passphrase.rs](examples/passphrase.rs), `cargo run --example passphrase`):
+//! ([passphrase.rs](examples/passphrase.rs)):  
 //!
 //! ```rust
 //! extern crate chbs;
@@ -46,23 +46,23 @@
 //! println!("Passphrase: {:?}", passphrase(5));
 //! ```
 //!
+//! Run it using `cargo run --example passphrase`.
+//!
 //! Use a word sampler to generate an infinite number of random words
-//! ([sampler.rs](examples/sampler.rs), `cargo run --example sampler`):
+//! ([sampler.rs](examples/sampler.rs)):
 //!
 //! ```rust
 //! extern crate chbs;
 //! use chbs::word_sampler;
 //!
-//! let mut sampler = word_sampler();
+//! let sampler = word_sampler();
 //!
-//! for i in 0..8 {
-//!     println!(
-//!         "Sampled word #{}: {:?}",
-//!         i,
-//!         sampler.next().unwrap(),
-//!     );
+//! for word in sampler.take(8) {
+//!     println!("Sampled word: {:?}", word);
 //! }
 //! ```
+//!
+//! Run it using `cargo run --example sampler`.
 //! 
 //! ## License
 //! This project is released under the MIT license.
@@ -103,12 +103,14 @@ pub fn words<'a>() -> Vec<&'a str> {
 
 /// Build a word sampler which is an iterator that randomly samples words from
 /// the included wordlist.
+/// 
 /// The word sampler is concidered cryptographically secure.
 pub fn word_sampler<'a>() -> WordSampler<'a> {
     WordSampler::new(words())
 }
 
 /// Generate a secure passphrase with the given number of words.
+/// 
 /// It is recommended to use 4 or more words when possible.
 ///
 /// # Panics
