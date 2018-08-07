@@ -18,10 +18,10 @@ keywords = [
 categories = [
     "cryptography",
 ]
-maintenance = "experimental"
 
 [badges]
 gitlab = { repository = "timvisee/chbs", branch = "master" }
 
 [dependencies]
+derive_builder = "0.5"
 rand = "0.5"

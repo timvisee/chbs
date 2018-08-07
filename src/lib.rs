@@ -1,15 +1,15 @@
 //! # Correct Horse Battery Staple
 //! A crate providing secure passphrase generation based on a wordlist also known as
 //! [diceware].
-//! 
+//!
 //! [![xkcd-img]][xkcd]
 //!
 //! The name `chbs` is short for the well known "correct horse battery staple"
 //! password which originates from the [XKCD][xkcd] comic shown above.
-//! 
+//!
 //! This library uses cryptographically secure randomization, and may be used
 //! for generating secret passphrases.
-//! 
+//!
 //! Notes:
 //! * this crate is still in development, and should thus be used with care
 //! * no warranty is provided for the quality of the passwords generated
@@ -30,7 +30,7 @@
 //! Here are some basic examples on how to use this crate.
 //!
 //! Add `chbs` as dependency in your `Cargo.toml` first:
-//! 
+//!
 //! ```toml
 //! [dependencies]
 //! chbs = "0.0.1"
@@ -63,16 +63,20 @@
 //! ```
 //!
 //! Run it using `cargo run --example sampler`.
-//! 
+//!
 //! ## License
 //! This project is released under the MIT license.
 //! Check out the [LICENSE](LICENSE) file for more information.
-//! 
+//!
 //! [diceware]: https://en.wikipedia.org/wiki/Diceware
 //! [xkcd]: https://xkcd.com/936/
 //! [xkcd-img]: https://imgs.xkcd.com/comics/password_strength.png
 
+#[macro_use]
+extern crate derive_builder;
 extern crate rand;
+
+use std::string::ToString;
 
 use rand::{
     distributions::Uniform,
@@ -103,18 +107,18 @@ pub fn words<'a>() -> Vec<&'a str> {
 
 /// Build a word sampler which is an iterator that randomly samples words from
 /// the included wordlist.
-/// 
+///
 /// The word sampler is concidered cryptographically secure.
 pub fn word_sampler<'a>() -> WordSampler<'a> {
     WordSampler::new(words())
 }
 
 /// Generate a secure passphrase with the given number of words.
-/// 
-/// It is recommended to use 4 or more words when possible.
+///
+/// It is recommended to use 5 or more words when possible.
 ///
 /// # Panics
-/// 
+///
 /// The number of words must at least be 1.
 pub fn passphrase(words: usize) -> String {
     if words == 0 {
@@ -125,6 +129,44 @@ pub fn passphrase(words: usize) -> String {
         .take(words)
         .collect::<Vec<_>>()
         .join(" ")
+}
+
+/// Generate a secure passphrase with the given number of words.
+///
+/// It is recommended to use 5 or more words when possible.
+///
+/// # Panics
+///
+/// The number of words must at least be 1.
+pub fn passphrase_config<C>(words: usize, config: &C) -> String
+    where
+        C: Separator + Capitalize,
+{
+    if words == 0 {
+        panic!("it is not allowed to generate a passphrase with 0 words");
+    }
+
+    // Build a randomizer used while building the passphrase
+    // TODO: use a shared randomizer
+    let mut rng = thread_rng();
+
+    word_sampler()
+        .take(words)
+        .map(|word| {
+            let mut word = word.to_owned();
+            config.capitalize(&mut word, &mut rng);
+            word
+        })
+        .fold(String::new(), |mut phrase, word| {
+            // Append a separator
+            if !phrase.is_empty() {
+                phrase += config.yield_separator();
+            }
+
+            // Append the word
+            phrase += &word;
+            phrase
+        })
 }
 
 /// A word sampler iterator that provides random words from a given wordlist.
@@ -161,6 +203,115 @@ impl<'a> Iterator for WordSampler<'a> {
     fn next(&mut self) -> Option<&'a str> {
         let i = self.rng.sample(self.distribution);
         Some(self.words[i])
+    }
+}
+
+/// Something that provides separators to use between passphrase words.
+pub trait Separator {
+    /// Yield a separator to use between passphrase words.
+    /// Each yielded separator must only be used once.
+    fn yield_separator(&self) -> &str;
+}
+
+/// Something that provides capitalization for passphrase words.
+pub trait Capitalize {
+    /// Yield whether to capitalize the first character of a passphrase word.
+    /// Each yielded value must only be used once.
+    fn yield_capitalize_first<R: Rng>(&self, rng: &mut R) -> bool;
+
+    /// Yield whether to capitalize whole passphrase words.
+    /// Each yielded value must only be used once.
+    fn yield_capitalize_word<R: Rng>(&self, rng: &mut R) -> bool;
+
+    /// Capitalize the given word as specified by this provider.
+    fn capitalize<R: Rng>(&self, word: &mut String, rng: &mut R) {
+        // Do not do anything if emtpy
+        if word.is_empty() {
+            return;
+        }
+
+        // Capitalize first characters
+        if self.yield_capitalize_first(rng) {
+            let first = word
+                .chars()
+                .map(|c| c.to_uppercase().to_string())
+                .next()
+                .unwrap_or_else(|| String::new());
+            let rest: String = word
+                .chars()
+                .skip(1)
+                .collect();
+            *word = first + &rest;
+        }
+
+        // Capitalize whole words
+        if self.yield_capitalize_word(rng) {
+            *word = word.to_uppercase();
+        }
+    }
+}
+
+/// A simple configuration for passphrase generation.
+#[derive(Builder, Clone, Debug)]
+#[builder(default)]
+pub struct SimpleConfig {
+    /// The separator string to use between passphrase words.
+    separator: String,
+
+    /// Whether to capitalize the first characters of words.
+    capitalize_first: Occurrence,
+
+    /// Whether to capitalize whole words.
+    capitalize_words: Occurrence,
+}
+
+impl Default for SimpleConfig {
+    fn default() -> SimpleConfig {
+        SimpleConfig {
+            separator: " ".into(),
+            capitalize_first: Occurrence::Sometimes,
+            capitalize_words: Occurrence::Never,
+        }
+    }
+}
+
+impl Separator for SimpleConfig {
+    fn yield_separator(&self) -> &str {
+        &self.separator
+    }
+}
+
+impl Capitalize for SimpleConfig {
+    fn yield_capitalize_first<R: Rng>(&self, rng: &mut R) -> bool {
+        self.capitalize_first.yield_occurrence(rng)
+    }
+
+    fn yield_capitalize_word<R: Rng>(&self, rng: &mut R) -> bool {
+        self.capitalize_words.yield_occurrence(rng)
+    }
+}
+
+/// A definition of how often something occurs.
+#[derive(Copy, Clone, Debug)]
+pub enum Occurrence {
+    /// This occurs all the time.
+    Always,
+
+    /// This sometimes (cryptographically randomly) occurs.
+    Sometimes,
+
+    /// This never occurs.
+    Never,
+}
+
+impl Occurrence {
+    /// Yield an occurrence.
+    pub fn yield_occurrence<R: Rng>(&self, rng: &mut R) -> bool {
+        match self {
+            Occurrence::Always => true,
+            Occurrence::Never => false,
+            Occurrence::Sometimes => rng.gen(),
+        }
     }
 }
 
