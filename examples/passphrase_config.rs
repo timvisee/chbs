@@ -12,12 +12,12 @@ fn main() {
     // - use hyphens as separator
     // - sometimes capitalizes whole passphrase words
     // - sometimes capitalizes the first characters of passphrase words
-    let config = SimpleConfigBuilder::default()
-        .separator("-".into())
+    let config = BasicConfigBuilder::default()
+        .separator("-")
         .capitalize_first(Occurrence::Sometimes)
         .capitalize_words(Occurrence::Sometimes)
         .build()
         .unwrap();
 
-    println!("Passphrase: {:?}", passphrase_config(5, &config));
+    println!("Passphrase: {:?}", passphrase(&config));
 }

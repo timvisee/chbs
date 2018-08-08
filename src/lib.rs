@@ -36,14 +36,15 @@
 //! chbs = "0.0.1"
 //! ```
 //!
-//! Generate a passphrase using the helper function consisting of 5 words
+//! Generate a passphrase with the default configuration using the helper
+//! function consisting of 5 words
 //! ([passphrase.rs](examples/passphrase.rs)):  
 //!
 //! ```rust
 //! extern crate chbs;
-//! use chbs::passphrase;
+//! use chbs::{config, passphrase};
 //!
-//! println!("Passphrase: {:?}", passphrase(5));
+//! println!("Passphrase: {:?}", passphrase(&config()));
 //! ```
 //!
 //! Run it using `cargo run --example passphrase`.
@@ -72,6 +73,8 @@
 //! [xkcd]: https://xkcd.com/936/
 //! [xkcd-img]: https://imgs.xkcd.com/comics/password_strength.png
 
+// TODO: prelude traits
+
 #[macro_use]
 extern crate derive_builder;
 extern crate rand;
@@ -87,6 +90,12 @@ use rand::{
 
 /// A static wordlist to use.
 const WORDLIST: &'static str = include_str!("../res/eff_large_wordlist.txt");
+
+/// The default number of words the passphrase will consist of.
+const DEFAULT_WORDS: usize = 5;
+
+/// The default separator used between passphrase words.
+const DEFAULT_SEPARATOR: &'static str = " ";
 
 /// Build a vector of words based on a wordlist to use for passphrase
 /// generation.
@@ -113,35 +122,19 @@ pub fn word_sampler<'a>() -> WordSampler<'a> {
     WordSampler::new(words())
 }
 
-/// Generate a secure passphrase with the given number of words.
+/// Generate a secure passphrase based on the given configuration.
 ///
 /// It is recommended to use 5 or more words when possible.
 ///
 /// # Panics
 ///
 /// The number of words must at least be 1.
-pub fn passphrase(words: usize) -> String {
-    if words == 0 {
-        panic!("it is not allowed to generate a passphrase with 0 words");
-    }
-
-    word_sampler()
-        .take(words)
-        .collect::<Vec<_>>()
-        .join(" ")
-}
-
-/// Generate a secure passphrase with the given number of words.
-///
-/// It is recommended to use 5 or more words when possible.
-///
-/// # Panics
-///
-/// The number of words must at least be 1.
-pub fn passphrase_config<C>(words: usize, config: &C) -> String
+pub fn passphrase<C>(config: &C) -> String
     where
-        C: Separator + Capitalize,
+        C: WordCount + Separator + Capitalize,
 {
+    // Yield the word count
+    let words = config.yield_word_count();
     if words == 0 {
         panic!("it is not allowed to generate a passphrase with 0 words");
     }
@@ -167,6 +160,11 @@ pub fn passphrase_config<C>(words: usize, config: &C) -> String
             phrase += &word;
             phrase
         })
+}
+
+/// Build a default basic configuration to use for passphrase generation.
+pub fn config() -> BasicConfig {
+    BasicConfig::default()
 }
 
 /// A word sampler iterator that provides random words from a given wordlist.
@@ -206,6 +204,16 @@ impl<'a> Iterator for WordSampler<'a> {
     }
 }
 
+/// Something that provides the number of words a passphrase must consist of.
+pub trait WordCount {
+    /// Yield the number of words the passphrase should consist of.
+    ///
+    /// This function must be called when generating a passphrase to
+    /// determine the number of words, then the words should be yielded
+    /// and processed.
+    fn yield_word_count(&self) -> usize;
+}
+
 /// Something that provides separators to use between passphrase words.
 pub trait Separator {
     /// Yield a separator to use between passphrase words.
@@ -225,35 +233,45 @@ pub trait Capitalize {
 
 /// A simple configuration for passphrase generation.
 #[derive(Builder, Clone, Debug)]
-#[builder(default)]
-pub struct SimpleConfig {
+#[builder(default, setter(into))]
+pub struct BasicConfig {
+    /// The number of words the passphrase must consist of.
+    pub words: usize,
+
     /// The separator string to use between passphrase words.
-    separator: String,
+    pub separator: String,
 
     /// Whether to capitalize the first characters of words.
-    capitalize_first: Occurrence,
+    pub capitalize_first: Occurrence,
 
     /// Whether to capitalize whole words.
-    capitalize_words: Occurrence,
+    pub capitalize_words: Occurrence,
 }
 
-impl Default for SimpleConfig {
-    fn default() -> SimpleConfig {
-        SimpleConfig {
-            separator: " ".into(),
+impl Default for BasicConfig {
+    fn default() -> BasicConfig {
+        BasicConfig {
+            words: DEFAULT_WORDS,
+            separator: DEFAULT_SEPARATOR.into(),
             capitalize_first: Occurrence::Sometimes,
             capitalize_words: Occurrence::Never,
         }
     }
 }
 
-impl Separator for SimpleConfig {
+impl WordCount for BasicConfig {
+    fn yield_word_count(&self) -> usize {
+        self.words
+    }
+}
+
+impl Separator for BasicConfig {
     fn yield_separator(&self) -> &str {
         &self.separator
     }
 }
 
-impl Capitalize for SimpleConfig {
+impl Capitalize for BasicConfig {
     fn capitalize<R: Rng>(&self, word: &mut String, rng: &mut R) {
         // Do not do anything if emtpy
         if word.is_empty() {
@@ -294,6 +312,16 @@ pub enum Occurrence {
     Never,
 }
 
+/// Allow easy `Occurrence` selection of `Always` and `Never` from a boolean.
+impl From<bool> for Occurrence {
+    fn from(b: bool) -> Occurrence {
+        match b {
+            true => Occurrence::Always,
+            false => Occurrence::Never,
+        }
+    }
+}
+
 impl Occurrence {
     /// Yield an occurrence.
     pub fn yield_occurrence<R: Rng>(&self, rng: &mut R) -> bool {
@@ -307,7 +335,7 @@ impl Occurrence {
 
 #[cfg(test)]
 mod tests {
-    use {passphrase, words, WordSampler, word_sampler};
+    use {config, passphrase, words, WordSampler, word_sampler};
 
     /// How many times to iterate for small or infinite tests.
     const ITERS: usize = 32;
@@ -339,8 +367,14 @@ mod tests {
     /// Generating a passphrase must produce the correct number of words.
     #[test]
     fn passphrase_words() {
-        for i in 1..=ITERS {
-            assert_eq!(passphrase(i).split(char::is_whitespace).count(), i);
+        let mut config = config();
+
+        for words in 1..=ITERS {
+            config.words = words;
+            assert_eq!(
+                passphrase(&config).split(char::is_whitespace).count(),
+                words,
+            );
         }
     }
 
@@ -348,7 +382,10 @@ mod tests {
     #[test]
     #[should_panic]
     fn empty_passphrase_panic() {
-        passphrase(0);
+        let mut config = config();
+        config.words = 0;
+
+        passphrase(&config);
     }
 
     /// Ensure a word sampler is able to produce words.:w

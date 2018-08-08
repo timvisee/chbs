@@ -48,14 +48,15 @@ Add `chbs` as dependency in your `Cargo.toml` first:
 chbs = "0.0.1"
 ```
 
-Generate a passphrase using the helper function consisting of 5 words
+Generate a passphrase with the default configuration using the helper function
+consisting of 5 words
 ([passphrase.rs](examples/passphrase.rs)):  
 
 ```rust
 extern crate chbs;
 use chbs::passphrase;
 
-println!("Passphrase: {:?}", passphrase(5));
+println!("Passphrase: {:?}", passphrase(&config()));
 ```
 
 Run it using `cargo run --example passphrase`.

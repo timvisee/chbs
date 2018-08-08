@@ -5,8 +5,8 @@
 //! which might not be desired in most situations.
 
 extern crate chbs;
-use chbs::passphrase;
+use chbs::{config, passphrase};
 
 fn main() {
-    println!("Passphrase: {:?}", passphrase(5));
+    println!("Passphrase: {:?}", passphrase(&config()));
 }
