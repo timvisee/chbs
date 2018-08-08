@@ -214,41 +214,13 @@ pub trait Separator {
 }
 
 /// Something that provides capitalization for passphrase words.
+///
+/// Each word is processed through the `capitalize` function,
+/// which applies the capitalization as specified by the provider.
+/// The word is mutated in-place.
 pub trait Capitalize {
-    /// Yield whether to capitalize the first character of a passphrase word.
-    /// Each yielded value must only be used once.
-    fn yield_capitalize_first<R: Rng>(&self, rng: &mut R) -> bool;
-
-    /// Yield whether to capitalize whole passphrase words.
-    /// Each yielded value must only be used once.
-    fn yield_capitalize_word<R: Rng>(&self, rng: &mut R) -> bool;
-
     /// Capitalize the given word as specified by this provider.
-    fn capitalize<R: Rng>(&self, word: &mut String, rng: &mut R) {
-        // Do not do anything if emtpy
-        if word.is_empty() {
-            return;
-        }
-
-        // Capitalize first characters
-        if self.yield_capitalize_first(rng) {
-            let first = word
-                .chars()
-                .map(|c| c.to_uppercase().to_string())
-                .next()
-                .unwrap_or_else(|| String::new());
-            let rest: String = word
-                .chars()
-                .skip(1)
-                .collect();
-            *word = first + &rest;
-        }
-
-        // Capitalize whole words
-        if self.yield_capitalize_word(rng) {
-            *word = word.to_uppercase();
-        }
-    }
+    fn capitalize<R: Rng>(&self, word: &mut String, rng: &mut R);
 }
 
 /// A simple configuration for passphrase generation.
@@ -282,12 +254,30 @@ impl Separator for SimpleConfig {
 }
 
 impl Capitalize for SimpleConfig {
-    fn yield_capitalize_first<R: Rng>(&self, rng: &mut R) -> bool {
-        self.capitalize_first.yield_occurrence(rng)
-    }
+    fn capitalize<R: Rng>(&self, word: &mut String, rng: &mut R) {
+        // Do not do anything if emtpy
+        if word.is_empty() {
+            return;
+        }
 
-    fn yield_capitalize_word<R: Rng>(&self, rng: &mut R) -> bool {
-        self.capitalize_words.yield_occurrence(rng)
+        // Capitalize first characters
+        if self.capitalize_first.yield_occurrence(rng) {
+            let first = word
+                .chars()
+                .map(|c| c.to_uppercase().to_string())
+                .next()
+                .unwrap_or_else(|| String::new());
+            let rest: String = word
+                .chars()
+                .skip(1)
+                .collect();
+            *word = first + &rest;
+        }
+
+        // Capitalize whole words
+        if self.capitalize_words.yield_occurrence(rng) {
+            *word = word.to_uppercase();
+        }
     }
 }
 
