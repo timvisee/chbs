@@ -73,11 +73,11 @@
 //! [xkcd]: https://xkcd.com/936/
 //! [xkcd-img]: https://imgs.xkcd.com/comics/password_strength.png
 
-// TODO: prelude traits
-
 #[macro_use]
 extern crate derive_builder;
 extern crate rand;
+
+pub mod prelude;
 
 use std::string::ToString;
 
