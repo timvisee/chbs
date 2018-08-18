@@ -204,32 +204,189 @@ impl<'a> Iterator for WordSampler<'a> {
     }
 }
 
-/// Something that provides the number of words a passphrase must consist of.
-pub trait WordCount {
-    /// Yield the number of words the passphrase should consist of.
-    ///
-    /// This function must be called when generating a passphrase to
-    /// determine the number of words, then the words should be yielded
-    /// and processed.
-    fn yield_word_count(&self) -> usize;
-}
 
-/// Something that provides separators to use between passphrase words.
-pub trait Separator {
-    /// Yield a separator to use between passphrase words.
-    /// Each yielded separator must only be used once.
-    fn yield_separator(&self) -> &str;
-}
 
-/// Something that provides capitalization for passphrase words.
+
+
+/// This trait provides configuration essentials used when generating a passphrase.
 ///
-/// Each word is processed through the `capitalize` function,
-/// which applies the capitalization as specified by the provider.
-/// The word is mutated in-place.
-pub trait Capitalize {
-    /// Capitalize the given word as specified by this provider.
-    fn capitalize<R: Rng>(&self, word: &mut String, rng: &mut R);
+/// It provides essential functions that define a list of word processors, phrase processors and a
+/// phrase builder to generate a passphrase based on a list of words.
+///
+/// This trait may be implemented on any struct to provide your own desired configuration features.
+// TODO: Create a config struct (scheme) with a fixed set of word and phrase processors for consistency.
+pub trait Config {
+    /// Get the word generator that is used to generate an ordered set of passphrase words, which
+    /// will then be processed into a final passphrase by other components.
+    fn word_generator(&self) -> Box<dyn WordGenerator>;
+
+    /// Get a list of all word processors that are part of this configuration.
+    /// Each word processor is applied to each word in the passphrase, in the order they are
+    /// returned in.
+    fn word_processors(&self) -> Vec<Box<dyn WordProcessor>>;
+
+    /// Get the phrase builder. Which is used to combine a set of passphrase words into a final
+    /// passphrase.
+    ///
+    /// Each given word has already been processed by all word processors.
+    /// The phrase builder should glue these words together with the proper word eparators.
+    fn phrase_builder(&self) -> Box<dyn PhraseBuilder>;
+
+    /// Get a list of all phrase processors that are part of this configuration.
+    /// Each phrase processor is applied to the whole passphrase built by the passphrase builder,
+    /// in the order they are returned in.
+    ///
+    /// If no phrase processor is returned the phrase isn't modified after building it with the
+    /// phrase builder.
+    fn phrase_processors(&self) -> Vec<Box<dyn PhraseProcessor>>;
+
+    /// Generate a single passphrase.
+    // TODO: provide a randomness source
+    fn generate(&self) -> String {
+        // Generate the passphrase words
+        let mut words = self.word_generator().generate_words();
+
+        // Run the passphrase words through the word processors
+        for processor in self.word_processors() {
+            words = words
+                .into_iter()
+                .map(|word| processor.process_word(word))
+                .collect();
+        }
+
+        // Build the passphrase
+        let mut phrase = self.phrase_builder().build_phrase(words);
+
+        // Run the phrase through the passphrase processors
+        for processor in self.phrase_processors() {
+            phrase = processor.process_phrase(phrase);
+        }
+
+        phrase
+    }
 }
+
+/// Get the entropy value for the current component, whether that is a word processor, a phrase
+/// builder or something else.
+///
+/// TODO: properly describe what entropy is here.
+pub trait Entropy {
+    /// Get the entropy value for this whole component.
+    /// The returned entropy value may be accumulated from various internal entropy sources.
+    ///
+    /// See the documentation on [Entropy](Entropy) for details on what entropy is and how it
+    /// should be calculated.
+    /// If this component does not have any effect on passphrase entropy `1` should be returned.
+    /// TODO: should this be an integer, or a big integer?
+    fn entropy(&self) -> f64;
+}
+
+/// A component that provides functionallity to generate passphrase words.
+/// On generation, an ordered list of passphrase words is returned that will be used in the
+/// password.
+pub trait WordGenerator: Entropy {
+    /// Generate an ordered set of passphrase words to use in a password.
+    fn generate_words(&self) -> Vec<String>;
+}
+
+/// Something that provides logic to process each passphrase word.
+/// This could be used to build a processor for word capitalization.
+pub trait WordProcessor: Entropy {
+    /// Process the given word.
+    fn process_word(&self, word: String) -> String;
+}
+
+/// Something that provides logic to combine a list of passphrase words into a passphrase.
+pub trait PhraseBuilder: Entropy {
+    /// Build the passphrase from the given words, and combine them in one final passphrase.
+    fn build_phrase(&self, words: Vec<String>) -> String;
+}
+
+/// Something that provides logic to process a passphrase as a whole.
+pub trait PhraseProcessor: Entropy {
+    /// Process the given passphrase as a whole.
+    /// The processed passphrase is returned.
+    fn process_phrase(&self, phrase: String) -> String;
+}
+
+
+
+
+
+/// A passphrase word generator that generates a fixed number of passphrase words.
+/// TODO: configure the wordlist to use.
+pub struct FixedGenerator {
+    /// The number of passphrase words to generate.
+    words: usize,
+}
+
+impl FixedGenerator {
+    /// Construct a new generator.
+    ///
+    /// The number of `words` to generate must be specified.
+    /// It is recommended to use at least 5 passphrase words with a wordlist of at least
+    /// 7776 (6^5) words.
+    ///
+    /// # Panics
+    ///
+    /// This panics when the given number of `words` is `0`.
+    pub fn new(words: usize) -> Self {
+        if words == 0 {
+            panic!("cannot create passphrase word generator, word count may not be zero");
+        }
+
+        Self {
+            words,
+        }
+    }
+}
+
+impl Entropy for FixedGenerator {
+    fn entropy(&self) -> f64 {
+        // TODO: multiply word list size by the word count
+        (7776 * self.words) as f64
+    }
+}
+
+impl WordGenerator for FixedGenerator {
+    fn generate_words(&self) -> Vec<String> {
+        word_sampler()
+            .take(self.words)
+            .map(|word| word.to_owned())
+            .collect()
+    }
+}
+
+/// A basic passphrase builder, which combines passphrase words into a passphrase with a static
+/// separator.
+pub struct BasicPhraseBuilder {
+    /// The separator that is used.
+    separator: String,
+}
+
+impl BasicPhraseBuilder {
+    pub fn new(separator: String) -> Self {
+        Self {
+            separator,
+        }
+    }
+}
+
+impl Entropy for BasicPhraseBuilder {
+    fn entropy(&self) -> f64 {
+        1.0
+    }
+}
+
+impl PhraseBuilder for BasicPhraseBuilder {
+    fn build_phrase(&self, words: Vec<String>) -> String {
+        words.join(&self.separator)
+    }
+}
+
+
+
+
 
 /// A simple configuration for passphrase generation.
 #[derive(Builder, Clone, Debug)]
@@ -297,6 +454,33 @@ impl Capitalize for BasicConfig {
             *word = word.to_uppercase();
         }
     }
+}
+
+/// Something that provides the number of words a passphrase must consist of.
+pub trait WordCount {
+    /// Yield the number of words the passphrase should consist of.
+    ///
+    /// This function must be called when generating a passphrase to
+    /// determine the number of words, then the words should be yielded
+    /// and processed.
+    fn yield_word_count(&self) -> usize;
+}
+
+/// Something that provides separators to use between passphrase words.
+pub trait Separator {
+    /// Yield a separator to use between passphrase words.
+    /// Each yielded separator must only be used once.
+    fn yield_separator(&self) -> &str;
+}
+
+/// Something that provides capitalization for passphrase words.
+///
+/// Each word is processed through the `capitalize` function,
+/// which applies the capitalization as specified by the provider.
+/// The word is mutated in-place.
+pub trait Capitalize {
+    /// Capitalize the given word as specified by this provider.
+    fn capitalize<R: Rng>(&self, word: &mut String, rng: &mut R);
 }
 
 /// A definition of how often something occurs.
