@@ -211,7 +211,8 @@ impl<'a> Iterator for WordSampler<'a> {
 ///
 /// The scheme defines how passphrases should be generated, and can be directly used to so.
 /// This scheme holds various components used during generation to modify and combine passphrase
-/// parts or words.
+/// parts or words. The scheme may be used as iterator, which will produce an infinite number of
+/// passphrases.
 ///
 /// It is recommended to use a configuration struct to confige and build a specific `Scheme`
 /// instead of setting one up manually. See: [`BasicConfig`](BasicConfig).
@@ -304,6 +305,17 @@ impl Scheme {
             * self.word_processors.iter().map(|p| p.entropy()).product::<f64>()
             * self.phrase_builder.entropy()
             * self.phrase_processors.iter().map(|p| p.entropy()).product::<f64>()
+    }
+}
+
+impl Iterator for Scheme {
+    type Item = String;
+
+    /// Generate a new passphrase based on this scheme.
+    ///
+    /// This method always returns `Some` holding a passphrase.
+    fn next(&mut self) -> Option<String> {
+        Some(self.generate())
     }
 }
 
