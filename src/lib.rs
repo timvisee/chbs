@@ -83,6 +83,7 @@
 extern crate derive_builder;
 extern crate rand;
 
+use std::fmt::Debug;
 use std::string::ToString;
 
 use rand::{
@@ -166,10 +167,12 @@ pub fn word_sampler<'a>() -> WordSampler<'a> {
 //        })
 //}
 
-/// A word sampler iterator that provides random words from a given wordlist.
+/// An iterator providing sampled passphrase words.
+///
+/// This sampler uses a given wordlist of wich random words are picked to be used in passphrases.
 /// The randomization is concidered cryptographically secure.
 ///
-/// As much words as needed may be pulled from this iterator.
+/// The iterator is infinite, as much words as needed may be pulled from this iterator.
 pub struct WordSampler<'a> {
     /// List of words that is used for sampling.
     words: Vec<&'a str>,
@@ -274,7 +277,7 @@ impl Scheme {
         config.to_scheme()
     }
 
-    /// Generate a single passphrase.
+    /// Generate a single passphrase based on this scheme.
     fn generate(&self) -> String {
         // Generate the passphrase words
         let mut words = self.word_generator.generate_words();
@@ -298,7 +301,7 @@ impl Scheme {
         phrase
     }
 
-    /// Calculate the entropy this configuration produces.
+    /// Calculate the entropy passphrases based on this scheme have.
     ///
     /// See the documentation on [Entropy](Entropy) for details on what entropy is and how it
     /// should be calculated.
@@ -327,6 +330,8 @@ pub trait ToScheme {
     fn to_scheme(&self) -> Scheme;
 }
 
+/// An entropy source.
+///
 /// Get the entropy value for the current component, whether that is a word processor, a phrase
 /// builder or something else.
 ///
@@ -374,7 +379,11 @@ pub trait PhraseProcessor: Entropy + Debug {
 
 
 
-/// A passphrase word generator that generates a fixed number of passphrase words.
+/// A generator providing a fixed number of passphrase words.
+///
+/// This generator provides a set of passphrase words for passphrase generation with a fixed number
+/// of words based on the configuration.
+///
 /// TODO: configure the wordlist to use.
 #[derive(Debug)]
 pub struct FixedGenerator {
@@ -419,8 +428,11 @@ impl WordGenerator for FixedGenerator {
     }
 }
 
-/// A word processor component that is used to randomly capitalize the first character of
-/// passphrase words, or the whole word at once.
+/// A word processor to capitalize passphrase words.
+///
+/// This word processor component capitalizes words for a passphrase in different styles depending
+/// on it's configuration. This processor currently supports capitalization of the first character
+/// in words and/or passphrase words as a whole.
 #[derive(Debug)]
 pub struct WordCapitalizer {
     /// Whether to capitalize the first characters of words.
@@ -476,8 +488,11 @@ impl WordProcessor for WordCapitalizer {
     }
 }
 
-/// A basic passphrase builder, which combines passphrase words into a passphrase with a static
-/// separator.
+/// A passphrase builder with as constant word separator.
+///
+/// This is a basic passphrase builder that uses a given set of words to build a full passphrase.
+/// This builder uses a single fixed separator, that is used as glue between all the passphrase
+/// words.
 #[derive(Debug)]
 pub struct BasicPhraseBuilder {
     /// The separator that is used.
@@ -576,7 +591,7 @@ pub enum Occurrence {
     /// This occurs all the time.
     Always,
 
-    /// This sometimes (cryptographically randomly) occurs.
+    /// This sometimes (cryptographically randomly) occurs with a 50% chance.
     Sometimes,
 
     /// This never occurs.
