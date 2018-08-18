@@ -501,13 +501,32 @@ impl PhraseBuilder for BasicPhraseBuilder {
 
 
 
-
-
-/// A simple configuration for passphrase generation.
+/// A simple passphrase configuration struct.
+///
+/// This struct provides basic passphrase generation options for simple passphrases.
+/// When the struct is configured, a [`Scheme`](Scheme) may be created based on it to actually
+/// generate passphrases.
+///
+/// # Examples
+///
+/// Use the default basic configuration, and change the separator. Then build a scheme, and
+/// generate a passphrase.
+///
+/// ```rust
+/// // Define the configuration
+/// let mut config = BasicConfig::default();
+/// config.separator = "-".into();
+///
+/// // Build the scheme for generation
+/// let scheme = config.to_scheme();
+///
+/// // Generate and output
+/// println!("Passphrase: {}", scheme.generate());
+/// ```
 #[derive(Builder, Clone, Debug)]
 #[builder(default, setter(into))]
 pub struct BasicConfig {
-    /// The number of words the passphrase must consist of.
+    /// The number of words the passphrase will consist of.
     pub words: usize,
 
     /// The separator string to use between passphrase words.
