@@ -166,11 +166,6 @@ pub fn word_sampler<'a>() -> WordSampler<'a> {
 //        })
 //}
 
-/// Build a default basic configuration to use for passphrase generation.
-pub fn config() -> BasicConfig {
-    BasicConfig::default()
-}
-
 /// A word sampler iterator that provides random words from a given wordlist.
 /// The randomization is concidered cryptographically secure.
 ///
@@ -212,46 +207,77 @@ impl<'a> Iterator for WordSampler<'a> {
 
 
 
-/// This trait provides configuration essentials used when generating a passphrase.
+/// A passphrase generation scheme.
 ///
-/// It provides essential functions that define a list of word processors, phrase processors and a
-/// phrase builder to generate a passphrase based on a list of words.
+/// The scheme defines how passphrases should be generated, and can be directly used to so.
+/// This scheme holds various components used during generation to modify and combine passphrase
+/// parts or words.
 ///
-/// This trait may be implemented on any struct to provide your own desired configuration features.
-// TODO: Create a config struct (scheme) with a fixed set of word and phrase processors for consistency.
-pub trait Config {
-    /// Get the word generator that is used to generate an ordered set of passphrase words, which
-    /// will then be processed into a final passphrase by other components.
-    fn word_generator(&self) -> Box<dyn WordGenerator>;
+/// It is recommended to use a configuration struct to confige and build a specific `Scheme`
+/// instead of setting one up manually. See: [`BasicConfig`](BasicConfig).
+///
+/// A scheme cannot be modified after creation, to ensure passphrase generation and calculating
+/// entropy is consistent.
+///
+/// # Components
+///
+/// The following components are part of this scheme and the passphrase generation process:
+///
+/// - The word generator is used once for each passphrase to generate, and provides a set of words
+///   to use for that specific phrase. The generator internally samples a known wordlist or
+///   generates randomized strings depending on how it is configured.
+/// - A set of word processors is used to modify each passphrase word from the generated set, to
+///   randomize capitalization, to add special characters and more depending on their
+///   configuration. Each processor is applied once to each phrase word in the specified order.
+///   If no word processor is available, the words are kept intact.
+/// - The phrase builder combines the set of now modified passphrase words into a full passphrase,
+///   the builder separates the words with a space or anything else depending on it's
+///   configuration.
+/// - A set of phrase processors is used to modify the full passphrase that is now combined. They
+///   may be used for further modifications with full control over the phrase. If no phrase
+///   processor is available, the phrase is kept intact.
+pub struct Scheme {
+    /// A word generator, which generates sets of words to use in the passphrase.
+    word_generator: Box<dyn WordGenerator>,
 
-    /// Get a list of all word processors that are part of this configuration.
-    /// Each word processor is applied to each word in the passphrase, in the order they are
-    /// returned in.
-    fn word_processors(&self) -> Vec<Box<dyn WordProcessor>>;
+    /// A set of word processors to apply to each passphrase word.
+    word_processors: Vec<Box<dyn WordProcessor>>,
 
-    /// Get the phrase builder. Which is used to combine a set of passphrase words into a final
-    /// passphrase.
-    ///
-    /// Each given word has already been processed by all word processors.
-    /// The phrase builder should glue these words together with the proper word eparators.
-    fn phrase_builder(&self) -> Box<dyn PhraseBuilder>;
+    /// A phrase builder that builds a passphrase out of a processed set of passphrase words.
+    phrase_builder: Box<dyn PhraseBuilder>,
 
-    /// Get a list of all phrase processors that are part of this configuration.
-    /// Each phrase processor is applied to the whole passphrase built by the passphrase builder,
-    /// in the order they are returned in.
-    ///
-    /// If no phrase processor is returned the phrase isn't modified after building it with the
-    /// phrase builder.
-    fn phrase_processors(&self) -> Vec<Box<dyn PhraseProcessor>>;
+    /// A set of phrase processors to apply to each passphrase.
+    phrase_processors: Vec<Box<dyn PhraseProcessor>>,
+}
+
+impl Scheme {
+    /// Construct a new password scheme based on the given set of components.
+    pub fn new(
+        word_generator: Box<dyn WordGenerator>,
+        word_processors: Vec<Box<dyn WordProcessor>>,
+        phrase_builder: Box<dyn PhraseBuilder>,
+        phrase_processors: Vec<Box<dyn PhraseProcessor>>,
+    ) -> Self {
+        Self {
+            word_generator,
+            word_processors,
+            phrase_builder,
+            phrase_processors,
+        }
+    }
+
+    /// Build a configuration based on the given object.
+    pub fn from<S: ToScheme>(config: &S) -> Self {
+        config.to_scheme()
+    }
 
     /// Generate a single passphrase.
-    // TODO: provide a randomness source
     fn generate(&self) -> String {
         // Generate the passphrase words
-        let mut words = self.word_generator().generate_words();
+        let mut words = self.word_generator.generate_words();
 
         // Run the passphrase words through the word processors
-        for p in self.word_processors() {
+        for p in &self.word_processors {
             words = words
                 .into_iter()
                 .map(|w| p.process_word(w))
@@ -259,10 +285,10 @@ pub trait Config {
         }
 
         // Build the passphrase
-        let mut phrase = self.phrase_builder().build_phrase(words);
+        let mut phrase = self.phrase_builder.build_phrase(words);
 
         // Run the phrase through the passphrase processors
-        for p in self.phrase_processors() {
+        for p in &self.phrase_processors {
             phrase = p.process_phrase(phrase);
         }
 
@@ -274,11 +300,17 @@ pub trait Config {
     /// See the documentation on [Entropy](Entropy) for details on what entropy is and how it
     /// should be calculated.
     fn entropy(&self) -> f64 {
-        self.word_generator().entropy()
-            * self.word_processors().iter().map(|p| p.entropy()).product::<f64>()
-            * self.phrase_builder().entropy()
-            * self.phrase_processors().iter().map(|p| p.entropy()).product::<f64>()
+        self.word_generator.entropy()
+            * self.word_processors.iter().map(|p| p.entropy()).product::<f64>()
+            * self.phrase_builder.entropy()
+            * self.phrase_processors.iter().map(|p| p.entropy()).product::<f64>()
     }
+}
+
+/// A trait providing an interface to build a password scheme based on some sort of configuration.
+pub trait ToScheme {
+    /// Build a password scheme based on configuration in this object.
+    fn to_scheme(&self) -> Scheme;
 }
 
 /// Get the entropy value for the current component, whether that is a word processor, a phrase
@@ -292,7 +324,7 @@ pub trait Entropy {
     /// See the documentation on [Entropy](Entropy) for details on what entropy is and how it
     /// should be calculated.
     /// If this component does not have any effect on passphrase entropy `1` should be returned.
-    /// TODO: should this be an integer, or a big integer?
+    /// TODO: use an entropy struct to track the entropy value
     fn entropy(&self) -> f64;
 }
 
@@ -487,6 +519,20 @@ impl Default for BasicConfig {
     }
 }
 
+impl ToScheme for BasicConfig {
+    fn to_scheme(&self) -> Scheme {
+        Scheme {
+            word_generator: Box::new(FixedGenerator::new(self.words)),
+            word_processors: vec![
+                Box::new(WordCapitalizer::new(self.capitalize_first, self.capitalize_words)),
+            ],
+            phrase_builder: Box::new(BasicPhraseBuilder::new(self.separator.clone())),
+            phrase_processors: Vec::new(),
+        }
+    }
+}
+
+// TODO: find a better abstract chances type for this.
 /// A definition of how often something occurs.
 #[derive(Copy, Clone, Debug)]
 pub enum Occurrence {
@@ -529,6 +575,8 @@ impl From<bool> for Occurrence {
         }
     }
 }
+
+
 
 #[cfg(test)]
 mod tests {
