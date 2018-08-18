@@ -73,6 +73,12 @@
 //! [xkcd]: https://xkcd.com/936/
 //! [xkcd-img]: https://imgs.xkcd.com/comics/password_strength.png
 
+// TODO: create a fixed scheme configuration for consistency
+// TODO: create an entropy wrapper for easier calculations
+// TODO: create wordlist struct
+// TODO: use wordlist in word sampler
+// TODO: create word generator using sampler or random generator
+
 #[macro_use]
 extern crate derive_builder;
 extern crate rand;
@@ -247,10 +253,10 @@ pub trait Config {
         let mut words = self.word_generator().generate_words();
 
         // Run the passphrase words through the word processors
-        for processor in self.word_processors() {
+        for p in self.word_processors() {
             words = words
                 .into_iter()
-                .map(|word| processor.process_word(word))
+                .map(|w| p.process_word(w))
                 .collect();
         }
 
@@ -258,11 +264,22 @@ pub trait Config {
         let mut phrase = self.phrase_builder().build_phrase(words);
 
         // Run the phrase through the passphrase processors
-        for processor in self.phrase_processors() {
-            phrase = processor.process_phrase(phrase);
+        for p in self.phrase_processors() {
+            phrase = p.process_phrase(phrase);
         }
 
         phrase
+    }
+
+    /// Calculate the entropy this configuration produces.
+    ///
+    /// See the documentation on [Entropy](Entropy) for details on what entropy is and how it
+    /// should be calculated.
+    fn entropy(&self) -> f64 {
+        self.word_generator().entropy()
+            * self.word_processors().iter().map(|p| p.entropy()).product::<f64>()
+            * self.phrase_builder().entropy()
+            * self.phrase_processors().iter().map(|p| p.entropy()).product::<f64>()
     }
 }
 
