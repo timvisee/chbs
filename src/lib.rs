@@ -237,18 +237,20 @@ impl<'a> Iterator for WordSampler<'a> {
 /// - A set of phrase processors is used to modify the full passphrase that is now combined. They
 ///   may be used for further modifications with full control over the phrase. If no phrase
 ///   processor is available, the phrase is kept intact.
+#[derive(Builder, Debug)]
+#[builder(pattern = "owned")]
 pub struct Scheme {
     /// A word generator, which generates sets of words to use in the passphrase.
-    word_generator: Box<dyn WordGenerator>,
+    word_generator: Box<WordGenerator>,
 
     /// A set of word processors to apply to each passphrase word.
-    word_processors: Vec<Box<dyn WordProcessor>>,
+    word_processors: Vec<Box<WordProcessor>>,
 
     /// A phrase builder that builds a passphrase out of a processed set of passphrase words.
-    phrase_builder: Box<dyn PhraseBuilder>,
+    phrase_builder: Box<PhraseBuilder>,
 
     /// A set of phrase processors to apply to each passphrase.
-    phrase_processors: Vec<Box<dyn PhraseProcessor>>,
+    phrase_processors: Vec<Box<PhraseProcessor>>,
 }
 
 impl Scheme {
@@ -343,26 +345,26 @@ pub trait Entropy {
 /// A component that provides functionallity to generate passphrase words.
 /// On generation, an ordered list of passphrase words is returned that will be used in the
 /// password.
-pub trait WordGenerator: Entropy {
+pub trait WordGenerator: Entropy + Debug {
     /// Generate an ordered set of passphrase words to use in a password.
     fn generate_words(&self) -> Vec<String>;
 }
 
 /// Something that provides logic to process each passphrase word.
 /// This could be used to build a processor for word capitalization.
-pub trait WordProcessor: Entropy {
+pub trait WordProcessor: Entropy + Debug {
     /// Process the given `word`.
     fn process_word(&self, word: String) -> String;
 }
 
 /// Something that provides logic to combine a list of passphrase words into a passphrase.
-pub trait PhraseBuilder: Entropy {
+pub trait PhraseBuilder: Entropy + Debug {
     /// Build the passphrase from the given words, and combine them in one final passphrase.
     fn build_phrase(&self, words: Vec<String>) -> String;
 }
 
 /// Something that provides logic to process a passphrase as a whole.
-pub trait PhraseProcessor: Entropy {
+pub trait PhraseProcessor: Entropy + Debug {
     /// Process the given `phrase` as a whole.
     /// The processed passphrase is returned.
     fn process_phrase(&self, phrase: String) -> String;
@@ -374,6 +376,7 @@ pub trait PhraseProcessor: Entropy {
 
 /// A passphrase word generator that generates a fixed number of passphrase words.
 /// TODO: configure the wordlist to use.
+#[derive(Debug)]
 pub struct FixedGenerator {
     /// The number of passphrase words to generate.
     words: usize,
@@ -418,6 +421,7 @@ impl WordGenerator for FixedGenerator {
 
 /// A word processor component that is used to randomly capitalize the first character of
 /// passphrase words, or the whole word at once.
+#[derive(Debug)]
 pub struct WordCapitalizer {
     /// Whether to capitalize the first characters of words.
     first: Occurrence,
@@ -474,6 +478,7 @@ impl WordProcessor for WordCapitalizer {
 
 /// A basic passphrase builder, which combines passphrase words into a passphrase with a static
 /// separator.
+#[derive(Debug)]
 pub struct BasicPhraseBuilder {
     /// The separator that is used.
     separator: String,
@@ -552,14 +557,15 @@ impl Default for BasicConfig {
 
 impl ToScheme for BasicConfig {
     fn to_scheme(&self) -> Scheme {
-        Scheme {
-            word_generator: Box::new(FixedGenerator::new(self.words)),
-            word_processors: vec![
+        SchemeBuilder::default()
+            .word_generator(Box::new(FixedGenerator::new(self.words)))
+            .word_processors(vec![
                 Box::new(WordCapitalizer::new(self.capitalize_first, self.capitalize_words)),
-            ],
-            phrase_builder: Box::new(BasicPhraseBuilder::new(self.separator.clone())),
-            phrase_processors: Vec::new(),
-        }
+            ])
+            .phrase_builder(Box::new(BasicPhraseBuilder::new(self.separator.clone())))
+            .phrase_processors(Vec::new())
+            .build()
+            .unwrap()
     }
 }
 
