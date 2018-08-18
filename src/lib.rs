@@ -83,8 +83,6 @@
 extern crate derive_builder;
 extern crate rand;
 
-pub mod prelude;
-
 use std::string::ToString;
 
 use rand::{
@@ -128,45 +126,45 @@ pub fn word_sampler<'a>() -> WordSampler<'a> {
     WordSampler::new(words())
 }
 
-/// Generate a secure passphrase based on the given configuration.
-///
-/// It is recommended to use 5 or more words when possible.
-///
-/// # Panics
-///
-/// The number of words must at least be 1.
-pub fn passphrase<C>(config: &C) -> String
-    where
-        C: WordCount + Separator + Capitalize,
-{
-    // Yield the word count
-    let words = config.yield_word_count();
-    if words == 0 {
-        panic!("it is not allowed to generate a passphrase with 0 words");
-    }
+///// Generate a secure passphrase based on the given configuration.
+/////
+///// It is recommended to use 5 or more words when possible.
+/////
+///// # Panics
+/////
+///// The number of words must at least be 1.
+//pub fn passphrase<C>(config: &C) -> String
+//    where
+//        C: WordCount + Separator + Capitalize,
+//{
+//    // Yield the word count
+//    let words = config.yield_word_count();
+//    if words == 0 {
+//        panic!("it is not allowed to generate a passphrase with 0 words");
+//    }
 
-    // Build a randomizer used while building the passphrase
-    // TODO: use a shared randomizer
-    let mut rng = thread_rng();
+//    // Build a randomizer used while building the passphrase
+//    // TODO: use a shared randomizer
+//    let mut rng = thread_rng();
 
-    word_sampler()
-        .take(words)
-        .map(|word| {
-            let mut word = word.to_owned();
-            config.capitalize(&mut word, &mut rng);
-            word
-        })
-        .fold(String::new(), |mut phrase, word| {
-            // Append a separator
-            if !phrase.is_empty() {
-                phrase += config.yield_separator();
-            }
+//    word_sampler()
+//        .take(words)
+//        .map(|word| {
+//            let mut word = word.to_owned();
+//            config.capitalize(&mut word, &mut rng);
+//            word
+//        })
+//        .fold(String::new(), |mut phrase, word| {
+//            // Append a separator
+//            if !phrase.is_empty() {
+//                phrase += config.yield_separator();
+//            }
 
-            // Append the word
-            phrase += &word;
-            phrase
-        })
-}
+//            // Append the word
+//            phrase += &word;
+//            phrase
+//        })
+//}
 
 /// Build a default basic configuration to use for passphrase generation.
 pub fn config() -> BasicConfig {
@@ -309,7 +307,7 @@ pub trait WordGenerator: Entropy {
 /// Something that provides logic to process each passphrase word.
 /// This could be used to build a processor for word capitalization.
 pub trait WordProcessor: Entropy {
-    /// Process the given word.
+    /// Process the given `word`.
     fn process_word(&self, word: String) -> String;
 }
 
@@ -321,7 +319,7 @@ pub trait PhraseBuilder: Entropy {
 
 /// Something that provides logic to process a passphrase as a whole.
 pub trait PhraseProcessor: Entropy {
-    /// Process the given passphrase as a whole.
+    /// Process the given `phrase` as a whole.
     /// The processed passphrase is returned.
     fn process_phrase(&self, phrase: String) -> String;
 }
@@ -371,6 +369,62 @@ impl WordGenerator for FixedGenerator {
             .take(self.words)
             .map(|word| word.to_owned())
             .collect()
+    }
+}
+
+/// A word processor component that is used to randomly capitalize the first character of
+/// passphrase words, or the whole word at once.
+pub struct WordCapitalizer {
+    /// Whether to capitalize the first characters of words.
+    first: Occurrence,
+
+    /// Whether to capitalize whole words.
+    all: Occurrence,
+}
+
+impl WordCapitalizer {
+    pub fn new(first: Occurrence, all: Occurrence) -> Self {
+        Self {
+            first,
+            all,
+        }
+    }
+}
+
+impl Entropy for WordCapitalizer {
+    fn entropy(&self) -> f64 {
+        self.first.entropy() * self.all.entropy()
+    }
+}
+
+impl WordProcessor for WordCapitalizer {
+    fn process_word(&self, mut word: String) -> String {
+        if word.is_empty() {
+            return word;
+        }
+
+        let mut rng = thread_rng();
+
+        // Capitalize the first character
+        if self.first.yield_occurrence(&mut rng) {
+            let first = word
+                .chars()
+                .map(|c| c.to_uppercase().to_string())
+                .next()
+                .unwrap_or_else(|| String::new());
+            let rest: String = word
+                .chars()
+                .skip(1)
+                .collect();
+            word = first + &rest;
+        }
+
+        // Capitalize whole words
+        if self.all.yield_occurrence(&mut rng) {
+            word = word.to_uppercase();
+        }
+
+        word
     }
 }
 
@@ -433,73 +487,6 @@ impl Default for BasicConfig {
     }
 }
 
-impl WordCount for BasicConfig {
-    fn yield_word_count(&self) -> usize {
-        self.words
-    }
-}
-
-impl Separator for BasicConfig {
-    fn yield_separator(&self) -> &str {
-        &self.separator
-    }
-}
-
-impl Capitalize for BasicConfig {
-    fn capitalize<R: Rng>(&self, word: &mut String, rng: &mut R) {
-        // Do not do anything if emtpy
-        if word.is_empty() {
-            return;
-        }
-
-        // Capitalize first characters
-        if self.capitalize_first.yield_occurrence(rng) {
-            let first = word
-                .chars()
-                .map(|c| c.to_uppercase().to_string())
-                .next()
-                .unwrap_or_else(|| String::new());
-            let rest: String = word
-                .chars()
-                .skip(1)
-                .collect();
-            *word = first + &rest;
-        }
-
-        // Capitalize whole words
-        if self.capitalize_words.yield_occurrence(rng) {
-            *word = word.to_uppercase();
-        }
-    }
-}
-
-/// Something that provides the number of words a passphrase must consist of.
-pub trait WordCount {
-    /// Yield the number of words the passphrase should consist of.
-    ///
-    /// This function must be called when generating a passphrase to
-    /// determine the number of words, then the words should be yielded
-    /// and processed.
-    fn yield_word_count(&self) -> usize;
-}
-
-/// Something that provides separators to use between passphrase words.
-pub trait Separator {
-    /// Yield a separator to use between passphrase words.
-    /// Each yielded separator must only be used once.
-    fn yield_separator(&self) -> &str;
-}
-
-/// Something that provides capitalization for passphrase words.
-///
-/// Each word is processed through the `capitalize` function,
-/// which applies the capitalization as specified by the provider.
-/// The word is mutated in-place.
-pub trait Capitalize {
-    /// Capitalize the given word as specified by this provider.
-    fn capitalize<R: Rng>(&self, word: &mut String, rng: &mut R);
-}
-
 /// A definition of how often something occurs.
 #[derive(Copy, Clone, Debug)]
 pub enum Occurrence {
@@ -513,16 +500,6 @@ pub enum Occurrence {
     Never,
 }
 
-/// Allow easy `Occurrence` selection of `Always` and `Never` from a boolean.
-impl From<bool> for Occurrence {
-    fn from(b: bool) -> Occurrence {
-        match b {
-            true => Occurrence::Always,
-            false => Occurrence::Never,
-        }
-    }
-}
-
 impl Occurrence {
     /// Yield an occurrence.
     pub fn yield_occurrence<R: Rng>(&self, rng: &mut R) -> bool {
@@ -530,6 +507,25 @@ impl Occurrence {
             Occurrence::Always => true,
             Occurrence::Never => false,
             Occurrence::Sometimes => rng.gen(),
+        }
+    }
+}
+
+impl Entropy for Occurrence {
+    fn entropy(&self) -> f64 {
+        match self {
+            Occurrence::Sometimes => 2.0,
+            _ => 1.0,
+        }
+    }
+}
+
+/// Allow easy `Occurrence` selection of `Always` and `Never` from a boolean.
+impl From<bool> for Occurrence {
+    fn from(b: bool) -> Occurrence {
+        match b {
+            true => Occurrence::Always,
+            false => Occurrence::Never,
         }
     }
 }
