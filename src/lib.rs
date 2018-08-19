@@ -310,7 +310,7 @@ impl Scheme {
     ///
     /// See the documentation on [Entropy](Entropy) for details on what entropy is and how it
     /// should be calculated.
-    fn entropy(&self) -> Entropy {
+    pub fn entropy(&self) -> Entropy {
         self.word_generator.entropy()
             + self
                 .word_processors
@@ -688,11 +688,11 @@ pub enum Probability {
 
     /// This is sometimes true.
     ///
-    /// This is sometimes true, depending on the given probability value.
     /// If `1.0` it's always true, if `0.0` it is never true, the value may be anywhere in between.
     ///
-    /// If the value is exactly `0.0` or `1.0` the variants `Always` and `Never` should be used
-    /// instead. It is therefore recommended to construct this type using the
+    /// If the value is exactly `0.0` or `1.0` the variants [`Always`](Probability::Always) and
+    /// [`Never`](Probability::Never) should be used instead.
+    /// It is therefore recommended to construct this type using the
     /// [`from`](Probability::from) method as this automatically chooses the correct variant.
     ///
     /// This value may never be `p < 0` or `p > 1`, as it will cause panics.
@@ -759,6 +759,19 @@ impl Probability {
             Probability::Always => true,
             Probability::Never => false,
             Probability::Sometimes(p) => rng.gen_bool(p),
+        }
+    }
+
+    /// Generate a cryptographically secure boolean for this probability.
+    ///
+    /// This method obtains a cryptographically secure randomness source through
+    /// [`thread_rng`](rand::thread_rng) and generates a boolean through
+    /// [`gen_bool`](Probability::gen_bool).
+    pub fn gen_bool_secure(self) -> bool {
+        match self {
+            Probability::Always => true,
+            Probability::Never => false,
+            Probability::Sometimes(_) => self.gen_bool(&mut thread_rng()),
         }
     }
 }
