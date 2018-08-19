@@ -83,8 +83,12 @@
 extern crate derive_builder;
 extern crate rand;
 
-use std::fmt::Debug;
-use std::string::ToString;
+use std::{
+    fmt::Debug,
+    iter::Sum,
+    ops::{Add, Div, Mul, Sub},
+    string::ToString,
+};
 
 use rand::{distributions::Uniform, prelude::*, rngs::ThreadRng, thread_rng};
 
@@ -306,19 +310,19 @@ impl Scheme {
     ///
     /// See the documentation on [Entropy](Entropy) for details on what entropy is and how it
     /// should be calculated.
-    fn entropy(&self) -> f64 {
+    fn entropy(&self) -> Entropy {
         self.word_generator.entropy()
-            * self
+            + self
                 .word_processors
                 .iter()
                 .map(|p| p.entropy())
-                .product::<f64>()
-            * self.phrase_builder.entropy()
-            * self
+                .sum::<Entropy>()
+            + self.phrase_builder.entropy()
+            + self
                 .phrase_processors
                 .iter()
                 .map(|p| p.entropy())
-                .product::<f64>()
+                .sum::<Entropy>()
     }
 }
 
@@ -339,13 +343,97 @@ pub trait ToScheme {
     fn to_scheme(&self) -> Scheme;
 }
 
+/// Password entropy.
+///
+/// The entropy number used internally represents the number of base 2 entropy bits,
+/// and is calculated using `log2(choices)`.
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
+pub struct Entropy(f64);
+
+impl Entropy {
+    /// Construct entropy for zero bits, representing no entropy.
+    pub fn zero() -> Self {
+        Entropy(0.0)
+    }
+
+    /// Construct entropy for one bit, representing 50/50 chance.
+    pub fn one() -> Self {
+        Entropy(1.0)
+    }
+
+    /// Construct entropy from a number of entropy bits.
+    pub fn from_bits<F: Into<f64>>(bits: F) -> Self {
+        Entropy(bits.into())
+    }
+
+    /// Construct entropy from a real number.
+    ///
+    /// For a wordlist of 7776 words where choices are uniform, the real number `7776` may be given
+    /// to construct the proper entropy value. This would produce an entropy instance with about
+    /// `12.9` bits.
+    ///
+    /// If `Entropy` should be constructed from a number of bits, use
+    /// [`from_bits`](Entropy::from_bits) instead.
+    pub fn from_real<F: Into<f64>>(real: F) -> Self {
+        Entropy(real.into().log2())
+    }
+
+    /// Get the number of entropy bits.
+    pub fn bits(&self) -> f64 {
+        self.0
+    }
+}
+
+impl Sum for Entropy {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator,
+        I::Item: Into<Entropy>,
+    {
+        iter.fold(Entropy::zero(), |total, e| total + e.into())
+    }
+}
+
+/// A macro to derive common operator traits for a struct.
+macro_rules! derive_ops {
+    (impl $trait_: ident for $type_: ident { fn $method: ident }) => {
+        // Operation with another Entropy object
+        impl $trait_<$type_> for $type_ {
+            type Output = $type_;
+
+            fn $method(self, $type_(b): $type_) -> $type_ {
+                let $type_(a) = self;
+                $type_(a.$method(&b))
+            }
+        }
+
+        // Operation with another integer or float value
+        impl<B> $trait_<B> for $type_
+        where
+            B: Into<f64>,
+        {
+            type Output = $type_;
+
+            fn $method(self, b: B) -> $type_ {
+                let $type_(a) = self;
+                $type_(a.$method(&b.into()))
+            }
+        }
+    };
+}
+
+derive_ops! { impl Add for Entropy { fn add } }
+derive_ops! { impl Sub for Entropy { fn sub } }
+derive_ops! { impl Mul for Entropy { fn mul } }
+derive_ops! { impl Div for Entropy { fn div } }
+
 /// An entropy source.
 ///
 /// Get the entropy value for the current component, whether that is a word processor, a phrase
 /// builder or something else.
 ///
 /// TODO: properly describe what entropy is here.
-pub trait Entropy {
+pub trait HasEntropy {
     /// Get the entropy value for this whole component.
     /// The returned entropy value may be accumulated from various internal entropy sources.
     ///
@@ -353,32 +441,32 @@ pub trait Entropy {
     /// should be calculated.
     /// If this component does not have any effect on passphrase entropy `1` should be returned.
     /// TODO: use an entropy struct to track the entropy value
-    fn entropy(&self) -> f64;
+    fn entropy(&self) -> Entropy;
 }
 
 /// A component that provides functionallity to generate passphrase words.
 /// On generation, an ordered list of passphrase words is returned that will be used in the
 /// password.
-pub trait WordGenerator: Entropy + Debug {
+pub trait WordGenerator: HasEntropy + Debug {
     /// Generate an ordered set of passphrase words to use in a password.
     fn generate_words(&self) -> Vec<String>;
 }
 
 /// Something that provides logic to process each passphrase word.
 /// This could be used to build a processor for word capitalization.
-pub trait WordProcessor: Entropy + Debug {
+pub trait WordProcessor: HasEntropy + Debug {
     /// Process the given `word`.
     fn process_word(&self, word: String) -> String;
 }
 
 /// Something that provides logic to combine a list of passphrase words into a passphrase.
-pub trait PhraseBuilder: Entropy + Debug {
+pub trait PhraseBuilder: HasEntropy + Debug {
     /// Build the passphrase from the given words, and combine them in one final passphrase.
     fn build_phrase(&self, words: Vec<String>) -> String;
 }
 
 /// Something that provides logic to process a passphrase as a whole.
-pub trait PhraseProcessor: Entropy + Debug {
+pub trait PhraseProcessor: HasEntropy + Debug {
     /// Process the given `phrase` as a whole.
     /// The processed passphrase is returned.
     fn process_phrase(&self, phrase: String) -> String;
@@ -415,10 +503,10 @@ impl FixedGenerator {
     }
 }
 
-impl Entropy for FixedGenerator {
-    fn entropy(&self) -> f64 {
-        // TODO: multiply word list size by the word count
-        (7776 * self.words) as f64
+impl HasEntropy for FixedGenerator {
+    fn entropy(&self) -> Entropy {
+        // TODO: get the word count from the wordlist
+        Entropy::from_real(7776) * self.words as f64
     }
 }
 
@@ -451,9 +539,9 @@ impl WordCapitalizer {
     }
 }
 
-impl Entropy for WordCapitalizer {
-    fn entropy(&self) -> f64 {
-        self.first.entropy() * self.all.entropy()
+impl HasEntropy for WordCapitalizer {
+    fn entropy(&self) -> Entropy {
+        self.first.entropy() + self.all.entropy()
     }
 }
 
@@ -502,9 +590,9 @@ impl BasicPhraseBuilder {
     }
 }
 
-impl Entropy for BasicPhraseBuilder {
-    fn entropy(&self) -> f64 {
-        1.0
+impl HasEntropy for BasicPhraseBuilder {
+    fn entropy(&self) -> Entropy {
+        Entropy::zero()
     }
 }
 
@@ -611,11 +699,11 @@ impl Occurrence {
     }
 }
 
-impl Entropy for Occurrence {
-    fn entropy(&self) -> f64 {
+impl HasEntropy for Occurrence {
+    fn entropy(&self) -> Entropy {
         match self {
-            Occurrence::Sometimes => 2.0,
-            _ => 1.0,
+            Occurrence::Sometimes => Entropy::one(),
+            _ => Entropy::zero(),
         }
     }
 }
