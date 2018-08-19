@@ -527,14 +527,14 @@ impl WordGenerator for FixedGenerator {
 #[derive(Debug)]
 pub struct WordCapitalizer {
     /// Whether to capitalize the first characters of words.
-    first: Occurrence,
+    first: Probability,
 
     /// Whether to capitalize whole words.
-    all: Occurrence,
+    all: Probability,
 }
 
 impl WordCapitalizer {
-    pub fn new(first: Occurrence, all: Occurrence) -> Self {
+    pub fn new(first: Probability, all: Probability) -> Self {
         Self { first, all }
     }
 }
@@ -554,7 +554,7 @@ impl WordProcessor for WordCapitalizer {
         let mut rng = thread_rng();
 
         // Capitalize the first character
-        if self.first.yield_occurrence(&mut rng) {
+        if self.first.gen_bool(&mut rng) {
             let first = word
                 .chars()
                 .map(|c| c.to_uppercase().to_string())
@@ -565,7 +565,7 @@ impl WordProcessor for WordCapitalizer {
         }
 
         // Capitalize whole words
-        if self.all.yield_occurrence(&mut rng) {
+        if self.all.gen_bool(&mut rng) {
             word = word.to_uppercase();
         }
 
@@ -643,10 +643,10 @@ pub struct BasicConfig {
     pub separator: String,
 
     /// Whether to capitalize the first characters of words.
-    pub capitalize_first: Occurrence,
+    pub capitalize_first: Probability,
 
     /// Whether to capitalize whole words.
-    pub capitalize_words: Occurrence,
+    pub capitalize_words: Probability,
 }
 
 impl Default for BasicConfig {
@@ -654,8 +654,8 @@ impl Default for BasicConfig {
         BasicConfig {
             words: DEFAULT_WORDS,
             separator: DEFAULT_SEPARATOR.into(),
-            capitalize_first: Occurrence::Sometimes,
-            capitalize_words: Occurrence::Never,
+            capitalize_first: Probability::half(),
+            capitalize_words: Probability::Never,
         }
     }
 }
@@ -674,47 +674,112 @@ impl ToScheme for BasicConfig {
     }
 }
 
-// TODO: find a better abstract chances type for this.
-/// A definition of how often something occurs.
+/// A probability definition.
+///
+/// This defines what the probability is of something being true.
+///
+/// The function [`gen_bool`](Probability::gen_bool) can be used to generate a boolean based on
+/// this probability. Depending on what randomness source is given, it may be cryptographically
+/// secure.
 #[derive(Copy, Clone, Debug)]
-pub enum Occurrence {
-    /// This occurs all the time.
+pub enum Probability {
+    /// This is always true.
     Always,
 
-    /// This sometimes (cryptographically randomly) occurs with a 50% chance.
-    Sometimes,
+    /// This is sometimes true.
+    ///
+    /// This is sometimes true, depending on the given probability value.
+    /// If `1.0` it's always true, if `0.0` it is never true, the value may be anywhere in between.
+    ///
+    /// If the value is exactly `0.0` or `1.0` the variants `Always` and `Never` should be used
+    /// instead. It is therefore recommended to construct this type using the
+    /// [`from`](Probability::from) method as this automatically chooses the correct variant.
+    ///
+    /// This value may never be `p < 0` or `p > 1`, as it will cause panics.
+    Sometimes(f64),
 
-    /// This never occurs.
+    /// This is never true, and is always false.
     Never,
 }
 
-impl Occurrence {
-    /// Yield an occurrence.
-    pub fn yield_occurrence<R: Rng>(self, rng: &mut R) -> bool {
+impl Probability {
+    /// Construct a probability from the given probability value.
+    ///
+    /// If `1.0` it's always true, if `0.0` it is never true.
+    /// Values outside this range will be wrapped to their corresponding edge.
+    pub fn from(probability: f64) -> Self {
+        match probability {
+            x if x >= 1.0 => Probability::Always,
+            x if x <= 0.0 => Probability::Never,
+            x => Probability::Sometimes(x),
+        }
+    }
+
+    /// Construct a probability from the given percentage.
+    ///
+    /// If `100.0` it's always true, if `0.0` it is never true.
+    /// Values outside this range will be wrapped to their corresponding edge.
+    pub fn from_percentage(percentage: f64) -> Self {
+        match percentage {
+            x if x >= 100.0 => Probability::Always,
+            x if x <= 0.0 => Probability::Never,
+            x => Probability::Sometimes(x / 100.0),
+        }
+    }
+
+    /// Construct a probability that is true half of the times (50/50, 50%).
+    pub fn half() -> Self {
+        Self::from(0.5)
+    }
+
+    /// Get the probability value.
+    ///
+    /// To get the percentage, use [`percentage`](Probability::percentage).
+    pub fn value(&self) -> f64 {
         match self {
-            Occurrence::Always => true,
-            Occurrence::Never => false,
-            Occurrence::Sometimes => rng.gen(),
+            Probability::Always => 1.0,
+            Probability::Sometimes(p) => *p,
+            Probability::Never => 0.0,
+        }
+    }
+
+    /// Get the probability percentage.
+    ///
+    /// To get the probability value, use [`value`](Probability::value).
+    pub fn percentage(&self) -> f64 {
+        self.value() * 100.0
+    }
+
+    /// Generate a boolean for this probability.
+    ///
+    /// If the given randomness source to `rng` is cryptographically secure,
+    /// the generated boolean can be considered cryptographically secure as well.
+    pub fn gen_bool<R: Rng>(self, rng: &mut R) -> bool {
+        match self {
+            Probability::Always => true,
+            Probability::Never => false,
+            Probability::Sometimes(p) => rng.gen_bool(p),
         }
     }
 }
 
-impl HasEntropy for Occurrence {
+impl HasEntropy for Probability {
     fn entropy(&self) -> Entropy {
         match self {
-            Occurrence::Sometimes => Entropy::one(),
+            // TODO: properly calculate entropy here
+            Probability::Sometimes(_p) => Entropy::one(),
             _ => Entropy::zero(),
         }
     }
 }
 
-/// Allow easy `Occurrence` selection of `Always` and `Never` from a boolean.
-impl From<bool> for Occurrence {
-    fn from(b: bool) -> Occurrence {
+/// Allow easy `Probability` selection of `Always` and `Never` from a boolean.
+impl From<bool> for Probability {
+    fn from(b: bool) -> Probability {
         if b {
-            Occurrence::Always
+            Probability::Always
         } else {
-            Occurrence::Never
+            Probability::Never
         }
     }
 }
