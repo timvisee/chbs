@@ -86,21 +86,16 @@ extern crate rand;
 use std::fmt::Debug;
 use std::string::ToString;
 
-use rand::{
-    distributions::Uniform,
-    prelude::*,
-    rngs::ThreadRng,
-    thread_rng,
-};
+use rand::{distributions::Uniform, prelude::*, rngs::ThreadRng, thread_rng};
 
 /// A static wordlist to use.
-const WORDLIST: &'static str = include_str!("../res/eff_large_wordlist.txt");
+const WORDLIST: &str = include_str!("../res/eff_large_wordlist.txt");
 
 /// The default number of words the passphrase will consist of.
 const DEFAULT_WORDS: usize = 5;
 
 /// The default separator used between passphrase words.
-const DEFAULT_SEPARATOR: &'static str = " ";
+const DEFAULT_SEPARATOR: &str = " ";
 
 /// Build a vector of words based on a wordlist to use for passphrase
 /// generation.
@@ -111,12 +106,11 @@ const DEFAULT_SEPARATOR: &'static str = " ";
 pub fn words<'a>() -> Vec<&'a str> {
     WORDLIST
         .lines()
-        .filter_map(|line| line
-            .trim_right()
-            .rsplit_terminator(char::is_whitespace)
-            .next()
-        )
-        .collect()
+        .filter_map(|line| {
+            line.trim_right()
+                .rsplit_terminator(char::is_whitespace)
+                .next()
+        }).collect()
 }
 
 /// Build a word sampler which is an iterator that randomly samples words from
@@ -206,10 +200,6 @@ impl<'a> Iterator for WordSampler<'a> {
     }
 }
 
-
-
-
-
 /// A passphrase generation scheme.
 ///
 /// The scheme defines how passphrases should be generated, and can be directly used to so.
@@ -218,7 +208,7 @@ impl<'a> Iterator for WordSampler<'a> {
 /// passphrases.
 ///
 /// It is recommended to use a configuration struct to confige and build a specific `Scheme`
-/// instead of setting one up manually. See: [`BasicConfig`](BasicConfig).
+/// instead of setting one up manually. The `chbs` crate provides [`BasicConfig`](BasicConfig).
 ///
 /// A scheme cannot be modified after creation, to ensure passphrase generation and calculating
 /// entropy is consistent.
@@ -240,20 +230,34 @@ impl<'a> Iterator for WordSampler<'a> {
 /// - A set of phrase processors is used to modify the full passphrase that is now combined. They
 ///   may be used for further modifications with full control over the phrase. If no phrase
 ///   processor is available, the phrase is kept intact.
+///
+/// # Examples
+///
+/// The scheme implements [`Iterator`](std::iter::Iterator). You may easily generate many
+/// passphrases this way:
+///
+/// ```rust
+/// let scheme = Scheme::default();
+///
+/// scheme.take(8)
+///     .for_each(|passphrase|
+///         println!("{}", passphrase);
+///     );
+/// ```
 #[derive(Builder, Debug)]
 #[builder(pattern = "owned")]
 pub struct Scheme {
     /// A word generator, which generates sets of words to use in the passphrase.
-    word_generator: Box<WordGenerator>,
+    word_generator: Box<dyn WordGenerator>,
 
     /// A set of word processors to apply to each passphrase word.
-    word_processors: Vec<Box<WordProcessor>>,
+    word_processors: Vec<Box<dyn WordProcessor>>,
 
     /// A phrase builder that builds a passphrase out of a processed set of passphrase words.
-    phrase_builder: Box<PhraseBuilder>,
+    phrase_builder: Box<dyn PhraseBuilder>,
 
     /// A set of phrase processors to apply to each passphrase.
-    phrase_processors: Vec<Box<PhraseProcessor>>,
+    phrase_processors: Vec<Box<dyn PhraseProcessor>>,
 }
 
 impl Scheme {
@@ -284,10 +288,7 @@ impl Scheme {
 
         // Run the passphrase words through the word processors
         for p in &self.word_processors {
-            words = words
-                .into_iter()
-                .map(|w| p.process_word(w))
-                .collect();
+            words = words.into_iter().map(|w| p.process_word(w)).collect();
         }
 
         // Build the passphrase
@@ -307,9 +308,17 @@ impl Scheme {
     /// should be calculated.
     fn entropy(&self) -> f64 {
         self.word_generator.entropy()
-            * self.word_processors.iter().map(|p| p.entropy()).product::<f64>()
+            * self
+                .word_processors
+                .iter()
+                .map(|p| p.entropy())
+                .product::<f64>()
             * self.phrase_builder.entropy()
-            * self.phrase_processors.iter().map(|p| p.entropy()).product::<f64>()
+            * self
+                .phrase_processors
+                .iter()
+                .map(|p| p.entropy())
+                .product::<f64>()
     }
 }
 
@@ -375,10 +384,6 @@ pub trait PhraseProcessor: Entropy + Debug {
     fn process_phrase(&self, phrase: String) -> String;
 }
 
-
-
-
-
 /// A generator providing a fixed number of passphrase words.
 ///
 /// This generator provides a set of passphrase words for passphrase generation with a fixed number
@@ -406,9 +411,7 @@ impl FixedGenerator {
             panic!("cannot create passphrase word generator, word count may not be zero");
         }
 
-        Self {
-            words,
-        }
+        Self { words }
     }
 }
 
@@ -444,10 +447,7 @@ pub struct WordCapitalizer {
 
 impl WordCapitalizer {
     pub fn new(first: Occurrence, all: Occurrence) -> Self {
-        Self {
-            first,
-            all,
-        }
+        Self { first, all }
     }
 }
 
@@ -471,11 +471,8 @@ impl WordProcessor for WordCapitalizer {
                 .chars()
                 .map(|c| c.to_uppercase().to_string())
                 .next()
-                .unwrap_or_else(|| String::new());
-            let rest: String = word
-                .chars()
-                .skip(1)
-                .collect();
+                .unwrap_or_else(String::new);
+            let rest: String = word.chars().skip(1).collect();
             word = first + &rest;
         }
 
@@ -501,9 +498,7 @@ pub struct BasicPhraseBuilder {
 
 impl BasicPhraseBuilder {
     pub fn new(separator: String) -> Self {
-        Self {
-            separator,
-        }
+        Self { separator }
     }
 }
 
@@ -518,8 +513,6 @@ impl PhraseBuilder for BasicPhraseBuilder {
         words.join(&self.separator)
     }
 }
-
-
 
 /// A simple passphrase configuration struct.
 ///
@@ -542,6 +535,15 @@ impl PhraseBuilder for BasicPhraseBuilder {
 ///
 /// // Generate and output
 /// println!("Passphrase: {}", scheme.generate());
+/// ```
+///
+/// Or use the [`BasicConfigBuilder`](BasicConfigBuilder) instead for a builder pattern:
+///
+/// ```rust
+/// let config = BasicConfigBuilder::default()
+///     .separator("-")
+///     .build()
+///     .unwrap();
 /// ```
 #[derive(Builder, Clone, Debug)]
 #[builder(default, setter(into))]
@@ -574,10 +576,10 @@ impl ToScheme for BasicConfig {
     fn to_scheme(&self) -> Scheme {
         SchemeBuilder::default()
             .word_generator(Box::new(FixedGenerator::new(self.words)))
-            .word_processors(vec![
-                Box::new(WordCapitalizer::new(self.capitalize_first, self.capitalize_words)),
-            ])
-            .phrase_builder(Box::new(BasicPhraseBuilder::new(self.separator.clone())))
+            .word_processors(vec![Box::new(WordCapitalizer::new(
+                self.capitalize_first,
+                self.capitalize_words,
+            ))]).phrase_builder(Box::new(BasicPhraseBuilder::new(self.separator.clone())))
             .phrase_processors(Vec::new())
             .build()
             .unwrap()
@@ -600,7 +602,7 @@ pub enum Occurrence {
 
 impl Occurrence {
     /// Yield an occurrence.
-    pub fn yield_occurrence<R: Rng>(&self, rng: &mut R) -> bool {
+    pub fn yield_occurrence<R: Rng>(self, rng: &mut R) -> bool {
         match self {
             Occurrence::Always => true,
             Occurrence::Never => false,
@@ -621,18 +623,17 @@ impl Entropy for Occurrence {
 /// Allow easy `Occurrence` selection of `Always` and `Never` from a boolean.
 impl From<bool> for Occurrence {
     fn from(b: bool) -> Occurrence {
-        match b {
-            true => Occurrence::Always,
-            false => Occurrence::Never,
+        if b {
+            Occurrence::Always
+        } else {
+            Occurrence::Never
         }
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
-    use {config, passphrase, words, WordSampler, word_sampler};
+    use {config, passphrase, word_sampler, words, WordSampler};
 
     /// How many times to iterate for small or infinite tests.
     const ITERS: usize = 32;
@@ -653,11 +654,9 @@ mod tests {
     #[test]
     fn all_alpha_hyphen_words() {
         assert!(
-            words().iter().all(|word|
-                word.chars().all(|c|
-                    c.is_alphabetic() || c == '-'
-                )
-            )
+            words()
+                .iter()
+                .all(|word| word.chars().all(|c| c.is_alphabetic() || c == '-'))
         );
     }
 
@@ -690,12 +689,7 @@ mod tests {
     /// itself is infinite.
     #[test]
     fn word_sampler_produces() {
-        assert_eq!(
-            word_sampler()
-                .take(ITERS)
-                .count(),
-            ITERS,
-        );
+        assert_eq!(word_sampler().take(ITERS).count(), ITERS,);
     }
 
     /// Ensure a word sampler produces words that are in the word list.
