@@ -119,8 +119,12 @@ pub fn words<'a>() -> Vec<&'a str> {
 /// the included wordlist.
 ///
 /// The word sampler is concidered cryptographically secure.
-pub fn word_sampler<'a>() -> WordSampler<'a> {
-    WordSampler::new(words())
+pub fn word_sampler() -> WordSampler {
+    WordSampler::new(
+        words().into_iter()
+            .map(|s| s.to_owned())
+            .collect()
+    )
 }
 
 ///// Generate a secure passphrase based on the given configuration.
@@ -171,10 +175,11 @@ pub fn word_sampler<'a>() -> WordSampler<'a> {
 /// The iterator is infinite, as much words as needed may be pulled from this iterator.
 ///
 /// To construct a `WordSampler` from a [`WordList`](WordList) use [`sampler`](WordList::sampler).
+// TODO: use string references
 #[derive(Clone, Debug)]
-pub struct WordSampler<'a> {
+pub struct WordSampler {
     /// List of words that is used for sampling.
-    words: Vec<&'a str>,
+    words: Vec<String>,
 
     /// Random distribution used for sampling.
     distribution: Uniform<usize>,
@@ -183,9 +188,9 @@ pub struct WordSampler<'a> {
     rng: ThreadRng,
 }
 
-impl<'a> WordSampler<'a> {
+impl WordSampler {
     /// Build a new word sampler which samples the given word list.
-    pub fn new(words: Vec<&'a str>) -> WordSampler<'a> {
+    pub fn new(words: Vec<String>) -> WordSampler {
         WordSampler {
             distribution: Uniform::new(0, words.len()),
             words,
@@ -197,25 +202,25 @@ impl<'a> WordSampler<'a> {
     ///
     /// This returns a cryptographically secure random word by reference, which is faster than
     /// [`word`](WordSampler::word) as it prevents cloning the chosen word.
-    fn word_ref(&mut self) -> &'a str {
+    fn word_ref(&mut self) -> &str {
         // TODO: maybe use rng.choose
-        self.words[self.rng.sample(self.distribution)]
+        &self.words[self.rng.sample(self.distribution)]
     }
 }
 
-impl<'a> WordProvider for WordSampler<'a> {
+impl WordProvider for WordSampler {
     fn word(&mut self) -> String {
         self.word_ref().to_owned()
     }
 }
 
-impl<'a> HasEntropy for WordSampler<'a> {
+impl HasEntropy for WordSampler {
     fn entropy(&self) -> Entropy {
         Entropy::from_real(self.words.len() as f64)
     }
 }
 
-impl<'a> Iterator for WordSampler<'a> {
+impl Iterator for WordSampler {
     type Item = String;
 
     /// Sample the next random word.
@@ -489,8 +494,18 @@ impl WordList {
     ///
     /// The word sampler may be used to pull any number of random words from the wordlist for
     /// passphrase generation.
-    pub fn sampler<'a>(&'a self) -> WordSampler<'a> {
-        WordSampler::new(self.words.iter().map(|s| s.as_ref()).collect())
+    pub fn sampler(&self) -> WordSampler {
+        WordSampler::new(self.words.clone())
+    }
+}
+
+impl Default for WordList {
+    fn default() -> WordList {
+        WordList::new(
+            words().into_iter()
+                .map(|s| s.to_owned())
+                .collect()
+        )
     }
 }
 
@@ -503,7 +518,7 @@ impl WordList {
 ///
 /// When generating a passphrase a set of words is obtained from a word provider by subsequent
 /// calls to [`word`](WordProvider::word).
-pub trait WordProvider: HasEntropy + Debug + Iterator<Item = String> {
+pub trait WordProvider: HasEntropy + Debug + Iterator<Item = String> + Clone {
     /// Obtain a random word.
     ///
     /// This method should obtain and return a random word from the provider.
@@ -717,10 +732,16 @@ impl PhraseBuilder for BasicPhraseBuilder {
 ///     .unwrap();
 /// ```
 #[derive(Builder, Clone, Debug)]
-#[builder(default, setter(into))]
-pub struct BasicConfig {
+#[builder(setter(into))]
+pub struct BasicConfig<P>
+where
+    P: WordProvider,
+{
     /// The number of words the passphrase will consist of.
     pub words: usize,
+
+    /// A provider random passphrase words can be obtained from.
+    pub word_provider: P,
 
     /// The separator string to use between passphrase words.
     pub separator: String,
@@ -732,10 +753,11 @@ pub struct BasicConfig {
     pub capitalize_words: Probability,
 }
 
-impl Default for BasicConfig {
-    fn default() -> BasicConfig {
+impl Default for BasicConfig<WordSampler> {
+    fn default() -> BasicConfig<WordSampler> {
         BasicConfig {
             words: DEFAULT_WORDS,
+            word_provider: WordList::default().sampler(),
             separator: DEFAULT_SEPARATOR.into(),
             capitalize_first: Probability::half(),
             capitalize_words: Probability::Never,
@@ -743,15 +765,25 @@ impl Default for BasicConfig {
     }
 }
 
-impl ToScheme for BasicConfig {
+impl<P> ToScheme for BasicConfig<P>
+where
+    P: WordProvider + 'static,
+{
     fn to_scheme(&self) -> Scheme {
         SchemeBuilder::default()
-            // TODO: assign custom word provider here
-            .word_set_provider(Box::new(FixedWordSetProvider::new(word_sampler(), self.words)))
-            .word_processors(vec![Box::new(WordCapitalizer::new(
-                self.capitalize_first,
-                self.capitalize_words,
-            ))]).phrase_builder(Box::new(BasicPhraseBuilder::new(self.separator.clone())))
+            .word_set_provider(
+                Box::new(FixedWordSetProvider::new(
+                    self.word_provider.clone(),
+                    self.words
+                ))
+            )
+            .word_processors(vec![
+                Box::new(WordCapitalizer::new(
+                    self.capitalize_first,
+                    self.capitalize_words,
+                ))
+            ])
+            .phrase_builder(Box::new(BasicPhraseBuilder::new(self.separator.clone())))
             .phrase_processors(Vec::new())
             .build()
             .unwrap()
