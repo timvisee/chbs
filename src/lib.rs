@@ -73,8 +73,6 @@
 //! [xkcd]: https://xkcd.com/936/
 //! [xkcd-img]: https://imgs.xkcd.com/comics/password_strength.png
 
-// TODO: create a fixed scheme configuration for consistency
-// TODO: create an entropy wrapper for easier calculations
 // TODO: create wordlist struct
 // TODO: use wordlist in word sampler
 // TODO: create word generator using sampler or random generator
@@ -165,12 +163,15 @@ pub fn word_sampler<'a>() -> WordSampler<'a> {
 //        })
 //}
 
-/// An iterator providing sampled passphrase words.
+/// An iterator providing sampled words.
 ///
-/// This sampler uses a given wordlist of wich random words are picked to be used in passphrases.
+/// This sampler uses a given wordlist of wich random words are picked for use in passphrases.
 /// The randomization is concidered cryptographically secure.
 ///
 /// The iterator is infinite, as much words as needed may be pulled from this iterator.
+///
+/// To construct a `WordSampler` from a [`Wordlist`](Wordlist) use [`sampler`](Wordlist::sampler).
+#[derive(Clone, Debug)]
 pub struct WordSampler<'a> {
     /// List of words that is used for sampling.
     words: Vec<&'a str>,
@@ -191,16 +192,36 @@ impl<'a> WordSampler<'a> {
             rng: thread_rng(),
         }
     }
+
+    /// Sample a random word by reference.
+    ///
+    /// This returns a cryptographically secure random word by reference, which is faster than
+    /// [`word`](WordSampler::word) as it prevents cloning the chosen word.
+    fn word_ref(&mut self) -> &'a str {
+        // TODO: maybe use rng.choose
+        self.words[self.rng.sample(self.distribution)]
+    }
+}
+
+impl<'a> WordProvider for WordSampler<'a> {
+    fn word(&mut self) -> String {
+        self.word_ref().to_owned()
+    }
+}
+
+impl<'a> HasEntropy for WordSampler<'a> {
+    fn entropy(&self) -> Entropy {
+        Entropy::from_real(self.words.len() as f64)
+    }
 }
 
 impl<'a> Iterator for WordSampler<'a> {
-    type Item = &'a str;
+    type Item = String;
 
     /// Sample the next random word.
     /// This iterator is infinite and always returns some word.
-    fn next(&mut self) -> Option<&'a str> {
-        let i = self.rng.sample(self.distribution);
-        Some(self.words[i])
+    fn next(&mut self) -> Option<String> {
+        Some(self.word())
     }
 }
 
@@ -251,8 +272,8 @@ impl<'a> Iterator for WordSampler<'a> {
 #[derive(Builder, Debug)]
 #[builder(pattern = "owned")]
 pub struct Scheme {
-    /// A word generator, which generates sets of words to use in the passphrase.
-    word_generator: Box<dyn WordGenerator>,
+    /// A word set provider, which sources a set of random words to use in the passphrase.
+    word_set_provider: Box<dyn WordSetProvider>,
 
     /// A set of word processors to apply to each passphrase word.
     word_processors: Vec<Box<dyn WordProcessor>>,
@@ -267,13 +288,13 @@ pub struct Scheme {
 impl Scheme {
     /// Construct a new password scheme based on the given set of components.
     pub fn new(
-        word_generator: Box<dyn WordGenerator>,
+        word_set_provider: Box<dyn WordSetProvider>,
         word_processors: Vec<Box<dyn WordProcessor>>,
         phrase_builder: Box<dyn PhraseBuilder>,
         phrase_processors: Vec<Box<dyn PhraseProcessor>>,
     ) -> Self {
         Self {
-            word_generator,
+            word_set_provider,
             word_processors,
             phrase_builder,
             phrase_processors,
@@ -286,9 +307,9 @@ impl Scheme {
     }
 
     /// Generate a single passphrase based on this scheme.
-    fn generate(&self) -> String {
+    fn generate(&mut self) -> String {
         // Generate the passphrase words
-        let mut words = self.word_generator.generate_words();
+        let mut words = self.word_set_provider.words();
 
         // Run the passphrase words through the word processors
         for p in &self.word_processors {
@@ -311,7 +332,7 @@ impl Scheme {
     /// See the documentation on [Entropy](Entropy) for details on what entropy is and how it
     /// should be calculated.
     pub fn entropy(&self) -> Entropy {
-        self.word_generator.entropy()
+        self.word_set_provider.entropy()
             + self
                 .word_processors
                 .iter()
@@ -444,12 +465,58 @@ pub trait HasEntropy {
     fn entropy(&self) -> Entropy;
 }
 
-/// A component that provides functionallity to generate passphrase words.
-/// On generation, an ordered list of passphrase words is returned that will be used in the
+/// A wordlist.
+///
+/// A loaded fixed wordlist which may be used as word provider for passphrase generation by
+/// constructing a sampler using [`sampler`](Wordlist::sampler).
+#[derive(Clone, Debug)]
+pub struct Wordlist {
+    /// A fixed set of words.
+    words: Vec<String>,
+}
+
+impl Wordlist {
+    /// Construct a new word list with the given words.
+    /// TODO: panic if the list contains no words
+    pub fn new(words: Vec<String>) -> Self {
+        Wordlist { words }
+    }
+
+    // TODO: load a wordlist from a file
+    // TODO: load statically included wordlists
+
+    /// Construct a word sampler based on this wordlist.
+    ///
+    /// The word sampler may be used to pull any number of random words from the wordlist for
+    /// passphrase generation.
+    pub fn sampler<'a>(&'a self) -> WordSampler<'a> {
+        WordSampler::new(self.words.iter().map(|s| s.as_ref()).collect())
+    }
+}
+
+/// Something that provides random words.
+///
+/// A word provider is used to provide any number of words for passphrase generation.
+/// Whether random words are genrated, or whether they are sampled from a known wordlist is
+/// undefined and decided by the implementor. Providers must be infinite and should never deplete.
+/// It is possible that the same word may be obtained more than once.
+///
+/// When generating a passphrase a set of words is obtained from a word provider by subsequent
+/// calls to [`word`](WordProvider::word).
+pub trait WordProvider: HasEntropy + Debug + Iterator<Item = String> {
+    /// Obtain a random word.
+    ///
+    /// This method should obtain and return a random word from the provider.
+    /// The randomization must be cryptographically secure as it's used for generating passphrases.
+    fn word(&mut self) -> String;
+}
+
+/// A component that provides functionallity to source a random set of passphrase words.
+/// On sourcing, an ordered list of random passphrase words is returned that will be used in the
 /// password.
-pub trait WordGenerator: HasEntropy + Debug {
-    /// Generate an ordered set of passphrase words to use in a password.
-    fn generate_words(&self) -> Vec<String>;
+pub trait WordSetProvider: HasEntropy + Debug {
+    /// Source a set of random passphrase words to use in a passphrase.
+    fn words(&mut self) -> Vec<String>;
 }
 
 /// Something that provides logic to process each passphrase word.
@@ -479,40 +546,56 @@ pub trait PhraseProcessor: HasEntropy + Debug {
 ///
 /// TODO: configure the wordlist to use.
 #[derive(Debug)]
-pub struct FixedGenerator {
-    /// The number of passphrase words to generate.
+pub struct FixedWordSetProvider<P>
+where
+    P: WordProvider,
+{
+    /// The word provider to obtain words from.
+    provider: P,
+
+    /// The number of passphrase words to obtain.
     words: usize,
 }
 
-impl FixedGenerator {
-    /// Construct a new generator.
+impl<P> FixedWordSetProvider<P>
+where
+    P: WordProvider,
+{
+    /// Construct a word set provider with a fixed word count.
     ///
-    /// The number of `words` to generate must be specified.
+    /// The number of words to fill a set with must be provided as `words`.
     /// It is recommended to use at least 5 passphrase words with a wordlist of at least
     /// 7776 (6^5) words.
     ///
-    /// # Panics
+    /// # Panic
     ///
-    /// This panics when the given number of `words` is `0`.
-    pub fn new(words: usize) -> Self {
+    /// `words` must be higher than zero.
+    pub fn new(provider: P, words: usize) -> Self {
+        // At least 1 word must be obtained by this set provider
         if words == 0 {
-            panic!("cannot create passphrase word generator, word count may not be zero");
+            panic!("cannot construct FixedWordSetProvider that obtains zero words");
         }
 
-        Self { words }
+        Self { provider, words }
     }
 }
 
-impl HasEntropy for FixedGenerator {
+impl<P> HasEntropy for FixedWordSetProvider<P>
+where
+    P: WordProvider,
+{
     fn entropy(&self) -> Entropy {
-        // TODO: get the word count from the wordlist
-        Entropy::from_real(7776) * self.words as f64
+        self.provider.entropy() * self.words as f64
     }
 }
 
-impl WordGenerator for FixedGenerator {
-    fn generate_words(&self) -> Vec<String> {
-        word_sampler()
+impl<P> WordSetProvider for FixedWordSetProvider<P>
+where
+    P: WordProvider,
+{
+    fn words(&mut self) -> Vec<String> {
+        self.provider
+            .by_ref()
             .take(self.words)
             .map(|word| word.to_owned())
             .collect()
@@ -663,7 +746,8 @@ impl Default for BasicConfig {
 impl ToScheme for BasicConfig {
     fn to_scheme(&self) -> Scheme {
         SchemeBuilder::default()
-            .word_generator(Box::new(FixedGenerator::new(self.words)))
+            // TODO: assign custom word provider here
+            .word_set_provider(Box::new(FixedWordSetProvider::new(word_sampler(), self.words)))
             .word_processors(vec![Box::new(WordCapitalizer::new(
                 self.capitalize_first,
                 self.capitalize_words,
