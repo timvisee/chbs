@@ -170,7 +170,7 @@ pub fn word_sampler<'a>() -> WordSampler<'a> {
 ///
 /// The iterator is infinite, as much words as needed may be pulled from this iterator.
 ///
-/// To construct a `WordSampler` from a [`Wordlist`](Wordlist) use [`sampler`](Wordlist::sampler).
+/// To construct a `WordSampler` from a [`WordList`](WordList) use [`sampler`](WordList::sampler).
 #[derive(Clone, Debug)]
 pub struct WordSampler<'a> {
     /// List of words that is used for sampling.
@@ -468,18 +468,18 @@ pub trait HasEntropy {
 /// A wordlist.
 ///
 /// A loaded fixed wordlist which may be used as word provider for passphrase generation by
-/// constructing a sampler using [`sampler`](Wordlist::sampler).
+/// constructing a sampler using [`sampler`](WordList::sampler).
 #[derive(Clone, Debug)]
-pub struct Wordlist {
+pub struct WordList {
     /// A fixed set of words.
     words: Vec<String>,
 }
 
-impl Wordlist {
+impl WordList {
     /// Construct a new word list with the given words.
     /// TODO: panic if the list contains no words
     pub fn new(words: Vec<String>) -> Self {
-        Wordlist { words }
+        WordList { words }
     }
 
     // TODO: load a wordlist from a file
