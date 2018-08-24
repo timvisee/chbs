@@ -73,10 +73,6 @@
 //! [xkcd]: https://xkcd.com/936/
 //! [xkcd-img]: https://imgs.xkcd.com/comics/password_strength.png
 
-// TODO: create wordlist struct
-// TODO: use wordlist in word sampler
-// TODO: create word generator using sampler or random generator
-
 #[macro_use]
 extern crate derive_builder;
 extern crate rand;
@@ -115,66 +111,15 @@ pub fn words<'a>() -> Vec<&'a str> {
         }).collect()
 }
 
-/// Build a word sampler which is an iterator that randomly samples words from
-/// the included wordlist.
-///
-/// The word sampler is concidered cryptographically secure.
-pub fn word_sampler() -> WordSampler {
-    WordSampler::new(
-        words().into_iter()
-            .map(|s| s.to_owned())
-            .collect()
-    )
-}
-
-///// Generate a secure passphrase based on the given configuration.
-/////
-///// It is recommended to use 5 or more words when possible.
-/////
-///// # Panics
-/////
-///// The number of words must at least be 1.
-//pub fn passphrase<C>(config: &C) -> String
-//    where
-//        C: WordCount + Separator + Capitalize,
-//{
-//    // Yield the word count
-//    let words = config.yield_word_count();
-//    if words == 0 {
-//        panic!("it is not allowed to generate a passphrase with 0 words");
-//    }
-
-//    // Build a randomizer used while building the passphrase
-//    // TODO: use a shared randomizer
-//    let mut rng = thread_rng();
-
-//    word_sampler()
-//        .take(words)
-//        .map(|word| {
-//            let mut word = word.to_owned();
-//            config.capitalize(&mut word, &mut rng);
-//            word
-//        })
-//        .fold(String::new(), |mut phrase, word| {
-//            // Append a separator
-//            if !phrase.is_empty() {
-//                phrase += config.yield_separator();
-//            }
-
-//            // Append the word
-//            phrase += &word;
-//            phrase
-//        })
-//}
-
-/// An iterator providing sampled words.
+/// An iterator uniformly sampling words.
 ///
 /// This sampler uses a given wordlist of wich random words are picked for use in passphrases.
 /// The randomization is concidered cryptographically secure.
 ///
 /// The iterator is infinite, as much words as needed may be pulled from this iterator.
 ///
-/// To construct a `WordSampler` from a [`WordList`](WordList) use [`sampler`](WordList::sampler).
+/// To construct an instance based on a [`WordList`](WordList), use the
+/// [`sampler`](WordList::sampler) method.
 // TODO: use string references
 #[derive(Clone, Debug)]
 pub struct WordSampler {
@@ -474,6 +419,9 @@ pub trait HasEntropy {
 ///
 /// A loaded fixed wordlist which may be used as word provider for passphrase generation by
 /// constructing a sampler using [`sampler`](WordList::sampler).
+///
+/// It is highly recommended that the worlist contains at least 7776 (6^5) words to provide enough
+/// entropy when uniformly sampling words from it.
 #[derive(Clone, Debug)]
 pub struct WordList {
     /// A fixed set of words.
@@ -529,6 +477,9 @@ pub trait WordProvider: HasEntropy + Debug + Iterator<Item = String> + Clone {
 /// A component that provides functionallity to source a random set of passphrase words.
 /// On sourcing, an ordered list of random passphrase words is returned that will be used in the
 /// password.
+///
+/// This differs from [`WordProvider`](WordProvider) as this provides a set of words instead of a
+/// single word.
 pub trait WordSetProvider: HasEntropy + Debug {
     /// Source a set of random passphrase words to use in a passphrase.
     fn words(&mut self) -> Vec<String>;
@@ -558,8 +509,6 @@ pub trait PhraseProcessor: HasEntropy + Debug {
 ///
 /// This generator provides a set of passphrase words for passphrase generation with a fixed number
 /// of words based on the configuration.
-///
-/// TODO: configure the wordlist to use.
 #[derive(Debug)]
 pub struct FixedWordSetProvider<P>
 where
@@ -754,6 +703,9 @@ where
 }
 
 impl Default for BasicConfig<WordSampler> {
+    /// Build a default basic configuration instance.
+    ///
+    /// This configuration uses the defaul wordlist as word provider for generating passphrases.
     fn default() -> BasicConfig<WordSampler> {
         BasicConfig {
             words: DEFAULT_WORDS,
