@@ -9,7 +9,8 @@ use prelude::*;
 /// passphrases.
 ///
 /// It is recommended to use a configuration struct to confige and build a specific `Scheme`
-/// instead of setting one up manually. The `chbs` crate provides [`BasicConfig`](BasicConfig).
+/// instead of setting one up manually.
+/// The `chbs` crate provides [`BasicConfig`](::config::BasicConfig).
 ///
 /// A scheme cannot be modified after creation, to ensure passphrase generation and calculating
 /// entropy is consistent.
