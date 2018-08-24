@@ -1,7 +1,4 @@
-use rand::{
-    prelude::*,
-    thread_rng,
-};
+use rand::{prelude::*, thread_rng};
 
 use entropy::Entropy;
 use prelude::*;

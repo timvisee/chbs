@@ -1,9 +1,4 @@
-use rand::{
-    distributions::Uniform,
-    prelude::*,
-    rngs::ThreadRng,
-    thread_rng,
-};
+use rand::{distributions::Uniform, prelude::*, rngs::ThreadRng, thread_rng};
 
 use entropy::Entropy;
 use prelude::*;
@@ -108,10 +103,6 @@ impl WordList {
 
 impl Default for WordList {
     fn default() -> WordList {
-        WordList::new(
-            words().into_iter()
-                .map(|s| s.to_owned())
-                .collect()
-        )
+        WordList::new(words().into_iter().map(|s| s.to_owned()).collect())
     }
 }

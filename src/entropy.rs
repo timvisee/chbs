@@ -103,4 +103,3 @@ pub trait HasEntropy {
     /// TODO: use an entropy struct to track the entropy value
     fn entropy(&self) -> Entropy;
 }
-
