@@ -13,11 +13,7 @@
 
 extern crate chbs;
 
-use chbs::{
-    config::BasicConfig,
-    prelude::*,
-    probability::Probability,
-};
+use chbs::{config::BasicConfig, prelude::*, probability::Probability};
 
 fn main() {
     // Build a custom configuration to:
