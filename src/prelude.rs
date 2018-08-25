@@ -6,7 +6,8 @@
 //!
 //! # Examples
 //! ```rust
-//! use chbs::prelude::*;
+//! extern crate chbs;
+//! use chbs::{config::BasicConfig, prelude::*};
 //!
 //! let config = BasicConfig::default();
 //!

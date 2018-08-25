@@ -21,12 +21,15 @@ use super::{DEFAULT_SEPARATOR, DEFAULT_WORDS};
 /// generate a passphrase.
 ///
 /// ```rust
+/// extern crate chbs;
+/// use chbs::{config::BasicConfig, prelude::*};
+///
 /// // Define the configuration
 /// let mut config = BasicConfig::default();
 /// config.separator = "-".into();
 ///
 /// // Build the scheme for generation
-/// let scheme = config.to_scheme();
+/// let mut scheme = config.to_scheme();
 ///
 /// // Generate and output
 /// println!("Passphrase: {}", scheme.generate());
@@ -35,10 +38,14 @@ use super::{DEFAULT_SEPARATOR, DEFAULT_WORDS};
 /// Or use the [`BasicConfigBuilder`](BasicConfigBuilder) instead for a builder pattern:
 ///
 /// ```rust
-/// let config = BasicConfigBuilder::default()
-///     .separator("-")
-///     .build()
-///     .unwrap();
+/// // TODO: fix this example
+/// // extern crate chbs;
+/// // use chbs::{config::*, word::WordSampler};
+/// //
+/// // let config = BasicConfigBuilder::default()
+/// //     .separator("-")
+/// //     .build()
+/// //     .unwrap();
 /// ```
 #[derive(Builder, Clone, Debug)]
 #[builder(setter(into))]

@@ -39,12 +39,13 @@ use prelude::*;
 /// passphrases this way:
 ///
 /// ```rust
-/// let scheme = Scheme::default();
+/// extern crate chbs;
+/// use chbs::{config::BasicConfig, prelude::*, scheme::Scheme};
+///
+/// let scheme = BasicConfig::default().to_scheme();
 ///
 /// scheme.take(8)
-///     .for_each(|passphrase|
-///         println!("{}", passphrase);
-///     );
+///     .for_each(|passphrase| println!("{}", passphrase));
 /// ```
 #[derive(Builder, Debug)]
 #[builder(pattern = "owned")]
@@ -84,7 +85,7 @@ impl Scheme {
     }
 
     /// Generate a single passphrase based on this scheme.
-    fn generate(&mut self) -> String {
+    pub fn generate(&mut self) -> String {
         // Generate the passphrase words
         let mut words = self.word_set_provider.words();
 
@@ -104,7 +105,7 @@ impl Scheme {
         phrase
     }
 
-    /// Calculate the entropy passphrases based on this scheme have.
+    /// Calculate the entropy that passphrases based on this scheme have.
     ///
     /// See the documentation on [Entropy](Entropy) for details on what entropy is and how it
     /// should be calculated.

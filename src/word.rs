@@ -5,6 +5,45 @@ use prelude::*;
 
 use super::words;
 
+/// A wordlist.
+///
+/// A loaded fixed wordlist which may be used as word provider for passphrase generation by
+/// constructing a sampler using [`sampler`](WordList::sampler).
+///
+/// It is highly recommended that the worlist contains at least 7776 (6^5) words to provide enough
+/// entropy when uniformly sampling words from it.
+#[derive(Clone, Debug)]
+pub struct WordList {
+    /// A fixed set of words.
+    words: Vec<String>,
+}
+
+impl WordList {
+    /// Construct a new word list with the given words.
+    /// TODO: panic if the list contains no words
+    pub fn new(words: Vec<String>) -> Self {
+        WordList { words }
+    }
+
+    // TODO: load a wordlist from a file
+    // TODO: load statically included wordlists
+
+    /// Construct a word sampler based on this wordlist.
+    ///
+    /// The word sampler may be used to pull any number of random words from the wordlist for
+    /// passphrase generation.
+    pub fn sampler(&self) -> WordSampler {
+        WordSampler::new(self.words.clone())
+    }
+}
+
+impl Default for WordList {
+    fn default() -> WordList {
+        // TODO: get default wordlist from static constructor method
+        WordList::new(words().into_iter().map(|s| s.to_owned()).collect())
+    }
+}
+
 /// An iterator uniformly sampling words.
 ///
 /// This sampler uses a given wordlist of wich random words are picked for use in passphrases.
@@ -66,43 +105,5 @@ impl Iterator for WordSampler {
     /// This iterator is infinite and always returns some word.
     fn next(&mut self) -> Option<String> {
         Some(self.word())
-    }
-}
-
-/// A wordlist.
-///
-/// A loaded fixed wordlist which may be used as word provider for passphrase generation by
-/// constructing a sampler using [`sampler`](WordList::sampler).
-///
-/// It is highly recommended that the worlist contains at least 7776 (6^5) words to provide enough
-/// entropy when uniformly sampling words from it.
-#[derive(Clone, Debug)]
-pub struct WordList {
-    /// A fixed set of words.
-    words: Vec<String>,
-}
-
-impl WordList {
-    /// Construct a new word list with the given words.
-    /// TODO: panic if the list contains no words
-    pub fn new(words: Vec<String>) -> Self {
-        WordList { words }
-    }
-
-    // TODO: load a wordlist from a file
-    // TODO: load statically included wordlists
-
-    /// Construct a word sampler based on this wordlist.
-    ///
-    /// The word sampler may be used to pull any number of random words from the wordlist for
-    /// passphrase generation.
-    pub fn sampler(&self) -> WordSampler {
-        WordSampler::new(self.words.clone())
-    }
-}
-
-impl Default for WordList {
-    fn default() -> WordList {
-        WordList::new(words().into_iter().map(|s| s.to_owned()).collect())
     }
 }

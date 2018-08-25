@@ -3,6 +3,8 @@ use std::{
     ops::{Add, Div, Mul, Sub},
 };
 
+// TODO: proper display/debug implementation for Entropy
+
 /// Password entropy.
 ///
 /// The entropy number used internally represents the number of base 2 entropy bits,

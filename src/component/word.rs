@@ -87,7 +87,12 @@ impl WordCapitalizer {
 
 impl HasEntropy for WordCapitalizer {
     fn entropy(&self) -> Entropy {
-        self.first.entropy() + self.all.entropy()
+        // For capitalizing all, capitalizing the first character doesn't change anything
+        if let Probability::Always = self.all {
+            Entropy::zero()
+        } else {
+            self.first.entropy() + self.all.entropy()
+        }
     }
 }
 

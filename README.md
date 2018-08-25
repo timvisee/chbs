@@ -48,27 +48,48 @@ Add `chbs` as dependency in your `Cargo.toml` first:
 chbs = "0.0.1"
 ```
 
-Generate a passphrase with the default configuration using the helper function
-consisting of 5 words
-([passphrase.rs](examples/passphrase.rs)):  
+Generate a passphrase with zero configuration using a helper function applying
+library defaults ([passphrase.rs](examples/passphrase.rs)):
 
 ```rust
 extern crate chbs;
 use chbs::passphrase;
 
-println!("Passphrase: {:?}", passphrase(&config()));
+println!("Passphrase: {:?}", passphrase());
 ```
 
 Run it using `cargo run --example passphrase`.
 
-Use a word sampler to generate an infinite number of random words
-([sampler.rs](examples/sampler.rs)):
+Generating a passphrase with configuration is recommended, here is a basic
+example ([`passphrase_config.rs`](examples/passphrase_config.rs)):
 
 ```rust
 extern crate chbs;
-use chbs::word_sampler;
+use chbs::{config::BasicConfig, prelude::*, probability::Probability};
 
-let sampler = word_sampler();
+// Build a custom configuration to:
+let mut config = BasicConfig::default();
+config.words = 8;
+config.separator = "-".into();
+config.capitalize_first = Probability::from(0.33);
+config.capitalize_words = Probability::half();
+let mut scheme = config.to_scheme();
+
+println!("Passphrase: {:?}", scheme.generate());
+println!("Entropy: {:?}", scheme.entropy().bits());
+```
+
+Run it using `cargo run --example passphrase_config`.
+
+Use a word sampler to generate an infinite number of random words based on
+a wordlist ([sampler.rs](examples/sampler.rs)):
+
+```rust
+extern crate chbs;
+use chbs::word::WordList;
+
+let words = WordList::default();
+let sampler = words.sampler();
 
 for word in sampler.take(8) {
     println!("Sampled word: {:?}", word);
