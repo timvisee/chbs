@@ -3,15 +3,55 @@ use rand::{distributions::Uniform, prelude::*, rngs::ThreadRng, thread_rng};
 use entropy::Entropy;
 use prelude::*;
 
-use super::words;
+/// The built-in EFF large wordlist words.
+///
+/// Construct a [`WordList`](WordList) from this list using
+/// [`WordList::builtin_eff_large()`](WordList::builtin_eff_large).
+///
+/// This wordlist contains 7776 (6<sup>5</sup>) words,
+/// and has an entropy of about 12.9 bits when uniformly sampling words from it.
+///
+/// The list is slightly modified to discard the dice numbers,
+/// [source](https://www.eff.org/deeplinks/2016/07/new-wordlists-random-passphrases).
+pub const BUILTIN_EFF_LARGE: &str = include_str!("../res/eff/large.txt");
+
+/// The built-in EFF short wordlist words.
+///
+/// Construct a [`WordList`](WordList) from this list using
+/// [`WordList::builtin_eff_short()`](WordList::builtin_eff_short).
+///
+/// **Note:** this wordlist is considered short, as it only contains 1296 (6<sup>4</sup>) words.
+/// The list has an entropy of about 10.3 bits when uniformly sampling words from it.  
+/// It is recommended to use a larger wordlist such as [`BUILTIN_EFF_LARGE`](BUILTIN_EFF_LARGE).
+///
+/// The list is slightly modified to discard the dice numbers,
+/// [source](https://www.eff.org/deeplinks/2016/07/new-wordlists-random-passphrases).
+pub const BUILTIN_EFF_SHORT: &str = include_str!("../res/eff/short.txt");
+
+/// The built-in EFF general short wordlist words.
+///
+/// Construct a [`WordList`](WordList) from this list using
+/// [`WordList::builtin_eff_general_short()`](WordList::builtin_eff_general_short).
+///
+/// **Note:** this wordlist is considered short, as it only contains 1296 (6<sup>4</sup>) words.
+/// The list has an entropy of about 10.3 bits when uniformly sampling words from it.  
+/// It is recommended to use a larger wordlist such as [`BUILTIN_EFF_LARGE`](BUILTIN_EFF_LARGE).
+///
+/// The list is slightly modified to discard the dice numbers,
+/// [source](https://www.eff.org/deeplinks/2016/07/new-wordlists-random-passphrases).
+pub const BUILTIN_EFF_GENERAL_SHORT: &str = include_str!("../res/eff/general_short.txt");
 
 /// A wordlist.
+///
+/// To load a built-in wordlist, checkout the methods on this struct prefixed with `builtin_`.  
+/// The default wordlist loaded when using [`default()`](WordList::default) uses
+/// [`builtin_eff_large()`](WordList::builtin_eff_large).
 ///
 /// A loaded fixed wordlist which may be used as word provider for passphrase generation by
 /// constructing a sampler using [`sampler`](WordList::sampler).
 ///
-/// It is highly recommended that the worlist contains at least 7776 (6^5) words to provide enough
-/// entropy when uniformly sampling words from it.
+/// It is highly recommended that the worlist contains at least 7776 (6<sup>5</sup>) words to
+/// provide enough entropy when uniformly sampling words from it.
 #[derive(Clone, Debug)]
 pub struct WordList {
     /// A fixed set of words.
@@ -20,15 +60,72 @@ pub struct WordList {
 
 impl WordList {
     /// Construct a new word list with the given words.
-    /// TODO: panic if the list contains no words
+    ///
+    /// # Panics
+    ///
+    /// This panics if the given set of words is empty.
     pub fn new(words: Vec<String>) -> Self {
+        if words.is_empty() {
+            panic!("cannot construct wordlist, given list of words is empty");
+        }
+
         WordList { words }
     }
 
     // TODO: load a wordlist from a file
-    // TODO: load statically included wordlists
 
-    /// Construct a word sampler based on this wordlist.
+    /// Construct wordlist from built-in EFF large.
+    ///
+    /// Use the built-in EFF large list of words, and construct a wordlist from it.
+    /// This is based on [`BUILTIN_EFF_LARGE`](BUILTIN_EFF_LARGE).
+    pub fn builtin_eff_large() -> Self {
+        Self::new(
+            BUILTIN_EFF_LARGE
+                .lines()
+                .map(|w| w.to_owned())
+                .collect::<Vec<String>>(),
+        )
+    }
+
+    /// Construct wordlist from built-in EFF short.
+    ///
+    /// Use the built-in EFF short list of words, and construct a wordlist from it.
+    /// This is based on [`BUILTIN_EFF_SHORT`](BUILTIN_EFF_SHORT).
+    ///
+    /// **Note:** this wordlist is considered short, as it only contains 1296 (6<sup>4</sup>)
+    /// words.
+    /// The list has an entropy of about 10.3 bits when uniformly sampling words from it.  
+    /// It is recommended to use a larger wordlist such as
+    /// [`builtin_eff_large`](WordList::builtin_eff_large).
+    pub fn builtin_eff_short() -> Self {
+        Self::new(
+            BUILTIN_EFF_SHORT
+                .lines()
+                .map(|w| w.to_owned())
+                .collect::<Vec<String>>(),
+        )
+    }
+
+    /// Construct wordlist from built-in EFF general short.
+    ///
+    /// Use the built-in EFF general short list of words, and construct a wordlist from it.
+    /// This is based on [`BUILTIN_EFF_GENERAL_SHORT`](BUILTIN_EFF_GENERAL_SHORT).
+    ///
+    /// **Note:** this wordlist is considered short, as it only contains 1296 (6<sup>4</sup>)
+    /// words.
+    /// The list has an entropy of about 10.3 bits when uniformly sampling words from it.  
+    /// It is recommended to use a larger wordlist such as
+    /// [`builtin_eff_large`](WordList::builtin_eff_large).
+    pub fn builtin_eff_general_short() -> Self {
+        Self::new(
+            BUILTIN_EFF_GENERAL_SHORT
+                .lines()
+                .map(|w| w.to_owned())
+                .collect::<Vec<String>>(),
+        )
+    }
+
+    /// Build a sampler for this wordlist.
     ///
     /// The word sampler may be used to pull any number of random words from the wordlist for
     /// passphrase generation.
@@ -38,9 +135,12 @@ impl WordList {
 }
 
 impl Default for WordList {
+    /// Construct a default wordlist.
+    ///
+    /// This uses the built-in EFF large wordlist, which can be constructed with
+    /// [`WordList::builtin_eff_large()`](WordList::builtin_eff_large).
     fn default() -> WordList {
-        // TODO: get default wordlist from static constructor method
-        WordList::new(words().into_iter().map(|s| s.to_owned()).collect())
+        WordList::builtin_eff_large()
     }
 }
 

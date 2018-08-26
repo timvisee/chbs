@@ -15,7 +15,6 @@
 //! let scheme = config.to_scheme();
 //! ```
 
-// Prelude common traits
 pub use component::traits::*;
 pub use entropy::HasEntropy;
 pub use scheme::ToScheme;

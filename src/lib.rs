@@ -106,9 +106,6 @@ pub mod probability;
 pub mod scheme;
 pub mod word;
 
-/// A static wordlist to use.
-const WORDLIST: &str = include_str!("../res/eff_large_wordlist.txt");
-
 /// The default number of words the passphrase will consist of.
 const DEFAULT_WORDS: usize = 5;
 
@@ -149,23 +146,6 @@ use prelude::*;
 /// ```
 pub fn passphrase() -> String {
     BasicConfig::default().to_scheme().generate()
-}
-
-/// Build a vector of words based on a wordlist to use for passphrase
-/// generation.
-///
-/// The included wordlist is prefixed with dice numbers, each line ends with
-/// an actual word. This function grabs the last alphabetic word from each
-/// line which are then collected into a vector.
-// TODO: remove this helper, add default constructors to WordList
-pub fn words<'a>() -> Vec<&'a str> {
-    WORDLIST
-        .lines()
-        .filter_map(|line| {
-            line.trim_right()
-                .rsplit_terminator(char::is_whitespace)
-                .next()
-        }).collect()
 }
 
 #[cfg(test)]

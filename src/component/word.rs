@@ -28,7 +28,7 @@ where
     ///
     /// The number of words to fill a set with must be provided as `words`.
     /// It is recommended to use at least 5 passphrase words with a wordlist of at least
-    /// 7776 (6^5) words.
+    /// 7776 (6<sup>5</sup>) words.
     ///
     /// # Panic
     ///
