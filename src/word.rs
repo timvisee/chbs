@@ -1,3 +1,7 @@
+use std::fs::read_to_string;
+use std::io::Error as IoError;
+use std::path::Path;
+
 use rand::{distributions::Uniform, prelude::*, rngs::ThreadRng, thread_rng};
 
 use entropy::Entropy;
@@ -61,6 +65,9 @@ pub struct WordList {
 impl WordList {
     /// Construct a new word list with the given words.
     ///
+    /// To load a wordlist from a file, use [`load`](WordList::load) instead.  
+    /// To load a built-in wordlist, use the methods on this struct prefixed with `builtin_`.
+    ///
     /// # Panics
     ///
     /// This panics if the given set of words is empty.
@@ -72,7 +79,78 @@ impl WordList {
         WordList { words }
     }
 
-    // TODO: load a wordlist from a file
+    /// Load a wordlist from a file.
+    ///
+    /// This loads a wordlist from a file at the given path, and constructs a `WordList`.
+    ///
+    /// - Words are splitted by any whitespace (including newlines),
+    ///   see [`char::is_whitespace`](char::is_whitespace)
+    /// - It assumes any non-whitespace character is part of a word
+    /// - Whitespaces are omitted the final wordlist
+    /// - Emtpy items are omitted
+    /// - The file must not include dice numbers
+    ///
+    /// For wordlists that include dice numbers, the [`load_diced`](WordList::load_diced) method
+    /// may be used instead.  
+    /// If words are separated in a different manner, manually load each word and use the
+    /// [`new`](WordList::new) constructor instead.
+    ///
+    /// An error is returned if loading the wordlist failed, or if the loaded file didn't contain
+    /// any words.
+    pub fn load<P>(path: P) -> Result<Self, WordListError>
+    where
+        P: AsRef<Path>
+    {
+        // Load all words, error if empty
+        let words: Vec<String> = read_to_string(path)?
+            .split_terminator(char::is_whitespace)
+            .filter(|w| !w.is_empty())
+            .map(|w| w.to_owned())
+            .collect();
+        if words.is_empty() {
+            return Err(WordListError::Empty);
+        }
+
+        Ok(Self::new(words))
+    }
+
+    /// Load a diced wordlist from a file.
+    ///
+    /// This loads a diced wordlist from a file at the given path, and constructs a `WordList`.
+    /// Many diceware wordlists include dice numbers for each word, these should be omitted when
+    /// using this crate. This method helps with that.
+    ///
+    /// - Words are splitted by the newline character (`\n`).
+    /// - Only the last word on each line is kept, terminated by any whitespace, see
+    ///   [`char::is_whitespace`](char::is_whitespace)
+    /// - It assumes any non-whitespace character is part of a word
+    /// - Lines having a single word with no dice number prefix are included
+    /// - Emtpy lines are omitted
+    ///
+    /// For wordlists that do not include dice numbers, the the regular [`load`](WordList::load)
+    /// method instead.  
+    /// If words are separated in a different manner, manually load each word and use the
+    /// [`new`](WordList::new) constructor instead.
+    ///
+    /// An error is returned if loading the wordlist failed, or if the loaded file didn't contain
+    /// any words.
+    pub fn load_diced<P>(path: P) -> Result<Self, WordListError>
+    where
+        P: AsRef<Path>
+    {
+        // Load all words, error if emtpy
+        let words: Vec<String> = read_to_string(path)?
+            .lines()
+            .filter(|w| !w.is_empty())
+            .filter_map(|w| w.rsplit_terminator(char::is_whitespace).next())
+            .map(|w| w.to_owned())
+            .collect();
+        if words.is_empty() {
+            return Err(WordListError::Empty);
+        }
+
+        Ok(Self::new(words))
+    }
 
     /// Construct wordlist from built-in EFF large.
     ///
@@ -141,6 +219,21 @@ impl Default for WordList {
     /// [`WordList::builtin_eff_large()`](WordList::builtin_eff_large).
     fn default() -> WordList {
         WordList::builtin_eff_large()
+    }
+}
+
+/// A [`WordList`](WordList) error.
+pub enum WordListError {
+    /// Failed to load a wordlist from a file.
+    Load(IoError),
+
+    /// A loaded wordlist is emtpy, which is not allowed.
+    Empty,
+}
+
+impl From<IoError> for WordListError {
+    fn from(err: IoError) -> WordListError {
+        WordListError::Load(err)
     }
 }
 
