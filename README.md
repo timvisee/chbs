@@ -11,37 +11,45 @@
 [gitlab-ci-master-badge]: https://gitlab.com/timvisee/chbs/badges/master/pipeline.svg
 
 # Rust library: Correct Horse Battery Staple
-A crate providing secure passphrase generation based on a wordlist also known as
-[diceware].
+A secure, easy to sue, configurable and extendable passphrase generation library
+based on a wordlist, generally known as [diceware].
 
 [![xkcd-img]][xkcd]
 
 The name `chbs` is short for the well known "correct horse battery staple"
 password which originates from the [XKCD][xkcd] comic shown above.
 
+* [Features](#features)
+* [Requirements](#requirements)
+* [Todo](#todo)
+* [Examples](#examples)
+* [Aditional notes](#aditional-notes)
+* [License](#license)
+
 This library uses cryptographically secure randomization, and may be used
-for generating secret passphrases.
+for generating secret passphrases[*](#aditional-notes).
 
-Notes:
-* this crate is still in development, and should thus be used with care
-* no warranty is provided for the quality of the passwords generated
-  through this library
+## Features
+* Simple and secure passphrase generation
+* Configurable generation schemes to meet your requirements
+* Use built-in or custom wordlists
+* Calculate passphrase entropy
+* Easy to use abstracted API
+* Very extendable, to set it up it any way you like
 
-Features:
-* simple and secure passphrase generation
-* configurable passphrase generation schemes to meet your requirements
-* use builtin or custom wordlists
-* calculate passphrase entropy
-* easy to use abstracted generation API
-* very extendable, to set it up it any way you like
+## Requirements
+* Rust 1.26 or higher (with `std`)
 
-TODO before stabilization which will require API changes:
-* use secure strings
-* ability to configure various passphrase generation properties:
-  * add numbers
-  * add special characters
-  * different separators
-  * generated words (based on character sequences)
+## Todo
+The following things need to be looked at before stabilization:
+
+* Use secure strings?
+* Additional stylers and configuration options:
+  * Add numbers
+  * Add special characters
+  * Different separators
+  * Generated words (based on character sequences)
+  * Replace characters with similar looking sequences (`a` to `4`, `o` to `()`)
 
 ## Examples
 Here are some basic examples on how to use this crate.
@@ -102,6 +110,14 @@ for word in sampler.take(8) {
 ```
 
 Run it using `cargo run --example sampler`.
+
+See all examples in the [`./examples`](./examples) directory.
+
+## Additional notes
+* this crate is still in development, and should thus be used with care
+* no warranty is provided for the quality of the passwords or passphrases
+  generated through this library
+* entropy calculations may be faulty at this moment
 
 ## License
 This project is released under the MIT license.
