@@ -107,6 +107,5 @@ pub trait HasEntropy {
     /// See the documentation on [Entropy](Entropy) for details on what entropy is and how it
     /// should be calculated.
     /// If this component does not have any effect on passphrase entropy `1` should be returned.
-    /// TODO: use an entropy struct to track the entropy value
     fn entropy(&self) -> Entropy;
 }

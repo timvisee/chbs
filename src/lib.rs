@@ -15,16 +15,21 @@
 //! * no warranty is provided for the quality of the passwords generated
 //!   through this library
 //!
+//! Features:
+//! * simple and secure passphrase generation
+//! * configurable passphrase generation schemes to meet your requirements
+//! * use builtin or custom wordlists
+//! * calculate passphrase entropy
+//! * easy to use abstracted generation API
+//! * very extendable, to set it up it any way you like
+//! 
 //! TODO before stabilization which will require API changes:
 //! * use secure strings
-//! * allow using custom wordlists
 //! * ability to configure various passphrase generation properties:
-//!   * random word capitalisation
 //!   * add numbers
 //!   * add special characters
 //!   * different separators
-//!   * unique words
-//! * calculate entropy
+//!   * generated words (based on character sequences)
 //!
 //! ## Examples
 //! Here are some basic examples on how to use this crate.

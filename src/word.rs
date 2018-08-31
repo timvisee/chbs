@@ -300,7 +300,7 @@ impl WordSampler {
     /// This returns a cryptographically secure random word by reference, which is faster than
     /// [`word`](WordSampler::word) as it prevents cloning the chosen word.
     fn word_ref(&mut self) -> &str {
-        // TODO: maybe use rng.choose
+        // Used instead of `rng.choose` for better performance
         &self.words[self.rng.sample(self.distribution)]
     }
 }
