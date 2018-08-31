@@ -47,7 +47,7 @@ impl Entropy {
 
 impl Display for Entropy {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "{} bits of entropy", self.bits())
+        write!(f, "{} bits", self.bits())
     }
 }
 

@@ -99,11 +99,11 @@ impl WordList {
     /// any words.
     ///
     /// # File examples
-    /// ```
+    /// ```txt
     /// abacus abdomen abdominal abide abiding
     /// ```
     /// or
-    /// ```
+    /// ```txt
     /// abacus
     /// abdomen
     /// ```
@@ -147,13 +147,13 @@ impl WordList {
     /// any words.
     ///
     /// # File examples
-    /// ```
+    /// ```txt
     /// 11111 abacus
     /// 11112 abdomen
     /// 11113 abdominal
     /// ```
     /// or
-    /// ```
+    /// ```txt
     /// #1 (1,1,1,1,2)    abacus
     /// #2 (1,1,1,1,2)    abdomen
     /// ```
