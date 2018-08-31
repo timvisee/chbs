@@ -93,11 +93,11 @@ where
             .word_set_provider(Box::new(FixedWordSetProvider::new(
                 self.word_provider.clone(),
                 self.words,
-            ))).word_processors(vec![Box::new(WordCapitalizer::new(
+            ))).word_stylers(vec![Box::new(WordCapitalizer::new(
                 self.capitalize_first,
                 self.capitalize_words,
             ))]).phrase_builder(Box::new(BasicPhraseBuilder::new(self.separator.clone())))
-            .phrase_processors(Vec::new())
+            .phrase_stylers(Vec::new())
             .build()
             .unwrap()
     }

@@ -22,16 +22,16 @@ use prelude::*;
 /// - The word generator is used once for each passphrase to generate, and provides a set of words
 ///   to use for that specific phrase. The generator internally samples a known wordlist or
 ///   generates randomized strings depending on how it is configured.
-/// - A set of word processors is used to modify each passphrase word from the generated set, to
+/// - A set of word stylers is used to modify each passphrase word from the generated set, to
 ///   randomize capitalization, to add special characters and more depending on their
-///   configuration. Each processor is applied once to each phrase word in the specified order.
-///   If no word processor is available, the words are kept intact.
+///   configuration. Each styler is applied once to each phrase word in the specified order.
+///   If no word styler is available, the words are kept intact.
 /// - The phrase builder combines the set of now modified passphrase words into a full passphrase,
 ///   the builder separates the words with a space or anything else depending on it's
 ///   configuration.
-/// - A set of phrase processors is used to modify the full passphrase that is now combined. They
+/// - A set of phrase stylers is used to modify the full passphrase that is now combined. They
 ///   may be used for further modifications with full control over the phrase. If no phrase
-///   processor is available, the phrase is kept intact.
+///   styler is available, the phrase is kept intact.
 ///
 /// # Examples
 ///
@@ -53,29 +53,29 @@ pub struct Scheme {
     /// A word set provider, which sources a set of random words to use in the passphrase.
     word_set_provider: Box<dyn WordSetProvider>,
 
-    /// A set of word processors to apply to each passphrase word.
-    word_processors: Vec<Box<dyn WordProcessor>>,
+    /// A set of word stylers to apply to each passphrase word.
+    word_stylers: Vec<Box<dyn WordStyler>>,
 
-    /// A phrase builder that builds a passphrase out of a processed set of passphrase words.
+    /// A phrase builder that builds a passphrase out of a styled set of passphrase words.
     phrase_builder: Box<dyn PhraseBuilder>,
 
-    /// A set of phrase processors to apply to each passphrase.
-    phrase_processors: Vec<Box<dyn PhraseProcessor>>,
+    /// A set of phrase stylers to apply to each passphrase.
+    phrase_stylers: Vec<Box<dyn PhraseStyler>>,
 }
 
 impl Scheme {
     /// Construct a new password scheme based on the given set of components.
     pub fn new(
         word_set_provider: Box<dyn WordSetProvider>,
-        word_processors: Vec<Box<dyn WordProcessor>>,
+        word_stylers: Vec<Box<dyn WordStyler>>,
         phrase_builder: Box<dyn PhraseBuilder>,
-        phrase_processors: Vec<Box<dyn PhraseProcessor>>,
+        phrase_stylers: Vec<Box<dyn PhraseStyler>>,
     ) -> Self {
         Self {
             word_set_provider,
-            word_processors,
+            word_stylers,
             phrase_builder,
-            phrase_processors,
+            phrase_stylers,
         }
     }
 
@@ -89,17 +89,17 @@ impl Scheme {
         // Generate the passphrase words
         let mut words = self.word_set_provider.words();
 
-        // Run the passphrase words through the word processors
-        for p in &self.word_processors {
-            words = words.into_iter().map(|w| p.process_word(w)).collect();
+        // Run the passphrase words through the word stylers
+        for p in &self.word_stylers {
+            words = words.into_iter().map(|w| p.style_word(w)).collect();
         }
 
         // Build the passphrase
         let mut phrase = self.phrase_builder.build_phrase(words);
 
-        // Run the phrase through the passphrase processors
-        for p in &self.phrase_processors {
-            phrase = p.process_phrase(phrase);
+        // Run the phrase through the passphrase stylers
+        for p in &self.phrase_stylers {
+            phrase = p.style_phrase(phrase);
         }
 
         phrase
@@ -112,13 +112,13 @@ impl Scheme {
     pub fn entropy(&self) -> Entropy {
         self.word_set_provider.entropy()
             + self
-                .word_processors
+                .word_stylers
                 .iter()
                 .map(|p| p.entropy())
                 .sum::<Entropy>()
             + self.phrase_builder.entropy()
             + self
-                .phrase_processors
+                .phrase_stylers
                 .iter()
                 .map(|p| p.entropy())
                 .sum::<Entropy>()

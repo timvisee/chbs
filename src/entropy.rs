@@ -96,7 +96,7 @@ derive_ops! { impl Div for Entropy { fn div } }
 
 /// An entropy source.
 ///
-/// Get the entropy value for the current component, whether that is a word processor, a phrase
+/// Get the entropy value for the current component, whether that is a word styler, a phrase
 /// builder or something else.
 ///
 /// TODO: properly describe what entropy is here.

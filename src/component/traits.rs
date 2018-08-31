@@ -32,11 +32,11 @@ pub trait WordSetProvider: HasEntropy + Debug {
     fn words(&mut self) -> Vec<String>;
 }
 
-/// Something that provides logic to process each passphrase word.
-/// This could be used to build a processor for word capitalization.
-pub trait WordProcessor: HasEntropy + Debug {
-    /// Process the given `word`.
-    fn process_word(&self, word: String) -> String;
+/// Something that provides logic to _style_ each passphrase word.
+/// This could be used to build a styler for word capitalization.
+pub trait WordStyler: HasEntropy + Debug {
+    /// Style the given `word`.
+    fn style_word(&self, word: String) -> String;
 }
 
 /// Something that provides logic to combine a list of passphrase words into a passphrase.
@@ -45,9 +45,9 @@ pub trait PhraseBuilder: HasEntropy + Debug {
     fn build_phrase(&self, words: Vec<String>) -> String;
 }
 
-/// Something that provides logic to process a passphrase as a whole.
-pub trait PhraseProcessor: HasEntropy + Debug {
-    /// Process the given `phrase` as a whole.
-    /// The processed passphrase is returned.
-    fn process_phrase(&self, phrase: String) -> String;
+/// Something that provides logic to _style_ a passphrase as a whole.
+pub trait PhraseStyler: HasEntropy + Debug {
+    /// Style the given `phrase` as a whole.
+    /// The styled passphrase is returned.
+    fn style_phrase(&self, phrase: String) -> String;
 }

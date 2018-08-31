@@ -65,10 +65,10 @@ where
     }
 }
 
-/// A word processor to capitalize passphrase words.
+/// A word styler to capitalize passphrase words.
 ///
-/// This word processor component capitalizes words for a passphrase in different styles depending
-/// on it's configuration. This processor currently supports capitalization of the first character
+/// This word styler component capitalizes words for a passphrase in different styles depending
+/// on it's configuration. This styler currently supports capitalization of the first character
 /// in words and/or passphrase words as a whole.
 #[derive(Debug)]
 pub struct WordCapitalizer {
@@ -96,8 +96,8 @@ impl HasEntropy for WordCapitalizer {
     }
 }
 
-impl WordProcessor for WordCapitalizer {
-    fn process_word(&self, mut word: String) -> String {
+impl WordStyler for WordCapitalizer {
+    fn style_word(&self, mut word: String) -> String {
         if word.is_empty() {
             return word;
         }
