@@ -1,9 +1,8 @@
 use std::{
+    fmt::{self, Display, Formatter},
     iter::Sum,
     ops::{Add, Div, Mul, Sub},
 };
-
-// TODO: proper display/debug implementation for Entropy
 
 /// Password entropy.
 ///
@@ -41,8 +40,14 @@ impl Entropy {
     }
 
     /// Get the number of entropy bits.
-    pub fn bits(&self) -> f64 {
+    pub fn bits(self) -> f64 {
         self.0
+    }
+}
+
+impl Display for Entropy {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{} bits of entropy", self.bits())
     }
 }
 
