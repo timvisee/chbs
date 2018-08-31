@@ -1,5 +1,5 @@
 //! # Rust library: Correct Horse Battery Staple
-//! A secure, easy to sue, configurable and extendable passphrase generation library
+//! A secure, easy to use, configurable and extendable passphrase generation library
 //! based on a wordlist, generally known as [diceware].
 //! 
 //! [![xkcd-img]][xkcd]
@@ -102,10 +102,10 @@
 //! See all examples in the [`./examples`](./examples) directory.
 //! 
 //! ## Additional notes
-//! * this crate is still in development, and should thus be used with care
-//! * no warranty is provided for the quality of the passwords or passphrases
+//! * This crate is still in development, and should thus be used with care
+//! * No warranty is provided for the quality of the passwords or passphrases
 //!   generated through this library
-//! * entropy calculations may be faulty at this moment
+//! * Entropy calculations may be faulty at this moment
 //! 
 //! ## License
 //! This project is released under the MIT license.
