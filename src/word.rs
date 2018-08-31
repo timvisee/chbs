@@ -223,11 +223,14 @@ impl Default for WordList {
 }
 
 /// A [`WordList`](WordList) error.
+#[derive(Fail, Debug)]
 pub enum WordListError {
     /// Failed to load a wordlist from a file.
-    Load(IoError),
+    #[fail(display = "failed to load wordlist from file")]
+    Load(#[cause] IoError),
 
     /// A loaded wordlist is emtpy, which is not allowed.
+    #[fail(display = "loaded wordlist did not contain words")]
     Empty,
 }
 
