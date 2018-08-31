@@ -97,6 +97,16 @@ impl WordList {
     ///
     /// An error is returned if loading the wordlist failed, or if the loaded file didn't contain
     /// any words.
+    ///
+    /// # File examples
+    /// ```
+    /// abacus abdomen abdominal abide abiding
+    /// ```
+    /// or
+    /// ```
+    /// abacus
+    /// abdomen
+    /// ```
     pub fn load<P>(path: P) -> Result<Self, WordListError>
     where
         P: AsRef<Path>
@@ -124,6 +134,7 @@ impl WordList {
     /// - Only the last word on each line is kept, terminated by any whitespace, see
     ///   [`char::is_whitespace`](char::is_whitespace)
     /// - It assumes any non-whitespace character is part of a word
+    /// - Prefixed words do not have to be dice numbers
     /// - Lines having a single word with no dice number prefix are included
     /// - Emtpy lines are omitted
     ///
@@ -134,6 +145,18 @@ impl WordList {
     ///
     /// An error is returned if loading the wordlist failed, or if the loaded file didn't contain
     /// any words.
+    ///
+    /// # File examples
+    /// ```
+    /// 11111 abacus
+    /// 11112 abdomen
+    /// 11113 abdominal
+    /// ```
+    /// or
+    /// ```
+    /// #1 (1,1,1,1,2)    abacus
+    /// #2 (1,1,1,1,2)    abdomen
+    /// ```
     pub fn load_diced<P>(path: P) -> Result<Self, WordListError>
     where
         P: AsRef<Path>
