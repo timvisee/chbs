@@ -136,6 +136,28 @@ impl Iterator for Scheme {
     }
 }
 
+impl SchemeBuilder {
+    /// Add a single word styler to the scheme.
+    pub fn add_word_styler(mut self, styler: Box<WordStyler>) -> Self {
+        match self.word_stylers {
+            Some(ref mut stylers) => stylers.push(styler),
+            None => self.word_stylers = Some(vec![styler]),
+        }
+
+        self
+    }
+
+    /// Add a single phrase styler to the scheme.
+    pub fn add_phrase_styler(mut self, styler: Box<PhraseStyler>) -> Self {
+        match self.phrase_stylers {
+            Some(ref mut stylers) => stylers.push(styler),
+            None => self.phrase_stylers = Some(vec![styler]),
+        }
+
+        self
+    }
+}
+
 /// A trait providing an interface to build a password scheme based on some sort of configuration.
 pub trait ToScheme {
     /// Build a password scheme based on configuration in this object.
