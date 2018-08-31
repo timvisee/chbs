@@ -23,11 +23,11 @@ password which originates from the [XKCD][xkcd] comic shown above.
 * [Requirements](#requirements)
 * [Todo](#todo)
 * [Examples](#examples)
-* [Aditional notes](#aditional-notes)
+* [Additional notes](#additional-notes)
 * [License](#license)
 
 This library uses cryptographically secure randomization, and may be used
-for generating secret passphrases[*](#aditional-notes).
+for generating secret passphrases[*](#additional-notes).
 
 ## Features
 * Simple and secure passphrase generation
