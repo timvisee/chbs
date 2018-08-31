@@ -27,16 +27,21 @@ Notes:
 * no warranty is provided for the quality of the passwords generated
   through this library
 
+Features:
+* simple and secure passphrase generation
+* configurable passphrase generation schemes to meet your requirements
+* use builtin or custom wordlists
+* calculate passphrase entropy
+* easy to use abstracted generation API
+* very extendable, to set it up it any way you like
+
 TODO before stabilization which will require API changes:
 * use secure strings
-* allow using custom wordlists
 * ability to configure various passphrase generation properties:
-  * random word capitalisation
   * add numbers
   * add special characters
   * different separators
-  * unique words
-* calculate entropy
+  * generated words (based on character sequences)
 
 ## Examples
 Here are some basic examples on how to use this crate.
@@ -48,26 +53,48 @@ Add `chbs` as dependency in your `Cargo.toml` first:
 chbs = "0.0.1"
 ```
 
-Generate a passphrase using the helper function consisting of 5 words
-([passphrase.rs](examples/passphrase.rs)):  
+Generate a passphrase with zero configuration using a helper function applying
+library defaults ([passphrase.rs](examples/passphrase.rs)):
 
 ```rust
 extern crate chbs;
 use chbs::passphrase;
 
-println!("Passphrase: {:?}", passphrase(5));
+println!("Passphrase: {:?}", passphrase());
 ```
 
 Run it using `cargo run --example passphrase`.
 
-Use a word sampler to generate an infinite number of random words
-([sampler.rs](examples/sampler.rs)):
+Generating a passphrase with configuration is recommended, here is a basic
+example ([`passphrase_config.rs`](examples/passphrase_config.rs)):
 
 ```rust
 extern crate chbs;
-use chbs::word_sampler;
+use chbs::{config::BasicConfig, prelude::*, probability::Probability};
 
-let sampler = word_sampler();
+// Build a custom configuration to:
+let mut config = BasicConfig::default();
+config.words = 8;
+config.separator = "-".into();
+config.capitalize_first = Probability::from(0.33);
+config.capitalize_words = Probability::half();
+let mut scheme = config.to_scheme();
+
+println!("Passphrase: {:?}", scheme.generate());
+println!("Entropy: {:?}", scheme.entropy().bits());
+```
+
+Run it using `cargo run --example passphrase_config`.
+
+Use a word sampler to generate an infinite number of random words based on
+a wordlist ([sampler.rs](examples/sampler.rs)):
+
+```rust
+extern crate chbs;
+use chbs::word::WordList;
+
+let words = WordList::default();
+let sampler = words.sampler();
 
 for word in sampler.take(8) {
     println!("Sampled word: {:?}", word);

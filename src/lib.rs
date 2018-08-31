@@ -1,61 +1,88 @@
 //! # Correct Horse Battery Staple
 //! A crate providing secure passphrase generation based on a wordlist also known as
 //! [diceware].
-//! 
+//!
 //! [![xkcd-img]][xkcd]
 //!
 //! The name `chbs` is short for the well known "correct horse battery staple"
 //! password which originates from the [XKCD][xkcd] comic shown above.
-//! 
+//!
 //! This library uses cryptographically secure randomization, and may be used
 //! for generating secret passphrases.
-//! 
+//!
 //! Notes:
 //! * this crate is still in development, and should thus be used with care
 //! * no warranty is provided for the quality of the passwords generated
 //!   through this library
 //!
+//! Features:
+//! * simple and secure passphrase generation
+//! * configurable passphrase generation schemes to meet your requirements
+//! * use builtin or custom wordlists
+//! * calculate passphrase entropy
+//! * easy to use abstracted generation API
+//! * very extendable, to set it up it any way you like
+//! 
 //! TODO before stabilization which will require API changes:
 //! * use secure strings
-//! * allow using custom wordlists
 //! * ability to configure various passphrase generation properties:
-//!   * random word capitalisation
 //!   * add numbers
 //!   * add special characters
 //!   * different separators
-//!   * unique words
-//! * calculate entropy
+//!   * generated words (based on character sequences)
 //!
 //! ## Examples
 //! Here are some basic examples on how to use this crate.
 //!
 //! Add `chbs` as dependency in your `Cargo.toml` first:
-//! 
+//!
 //! ```toml
 //! [dependencies]
 //! chbs = "0.0.1"
 //! ```
 //!
-//! Generate a passphrase using the helper function consisting of 5 words
-//! ([passphrase.rs](examples/passphrase.rs)):  
+//! Generate a passphrase with zero configuration using a helper function applying
+//! library defaults ([passphrase.rs](examples/passphrase.rs)):
 //!
 //! ```rust
 //! extern crate chbs;
 //! use chbs::passphrase;
 //!
-//! println!("Passphrase: {:?}", passphrase(5));
+//! println!("Passphrase: {:?}", passphrase());
 //! ```
 //!
 //! Run it using `cargo run --example passphrase`.
 //!
-//! Use a word sampler to generate an infinite number of random words
+//! Generating a passphrase with configuration is recommended, here is a basic
+//! example ([`passphrase_config.rs`](examples/passphrase_config.rs)):
+//!
+//! ```rust
+//! extern crate chbs;
+//! use chbs::{config::BasicConfig, prelude::*, probability::Probability};
+//!
+//! // Build a custom configuration to:
+//! let mut config = BasicConfig::default();
+//! config.words = 8;
+//! config.separator = "-".into();
+//! config.capitalize_first = Probability::from(0.33);
+//! config.capitalize_words = Probability::half();
+//! let mut scheme = config.to_scheme();
+//!
+//! println!("Passphrase: {:?}", scheme.generate());
+//! println!("Entropy: {:?}", scheme.entropy().bits());
+//! ```
+//!
+//! Run it using `cargo run --example passphrase_config`.
+//!
+//! Use a word sampler to generate an infinite number of random words based on a wordlist
 //! ([sampler.rs](examples/sampler.rs)):
 //!
 //! ```rust
 //! extern crate chbs;
-//! use chbs::word_sampler;
+//! use chbs::word::WordList;
 //!
-//! let sampler = word_sampler();
+//! let words = WordList::default();
+//! let sampler = words.sampler();
 //!
 //! for word in sampler.take(8) {
 //!     println!("Sampled word: {:?}", word);
@@ -63,181 +90,95 @@
 //! ```
 //!
 //! Run it using `cargo run --example sampler`.
-//! 
+//!
 //! ## License
 //! This project is released under the MIT license.
 //! Check out the [LICENSE](LICENSE) file for more information.
-//! 
+//!
 //! [diceware]: https://en.wikipedia.org/wiki/Diceware
 //! [xkcd]: https://xkcd.com/936/
 //! [xkcd-img]: https://imgs.xkcd.com/comics/password_strength.png
 
+#[macro_use]
+extern crate derive_builder;
+#[macro_use]
+extern crate failure;
 extern crate rand;
 
-use rand::{
-    distributions::Uniform,
-    prelude::*,
-    rngs::ThreadRng,
-    thread_rng,
-};
+pub mod component;
+pub mod config;
+pub mod entropy;
+pub mod prelude;
+pub mod probability;
+pub mod scheme;
+pub mod word;
 
-/// A static wordlist to use.
-const WORDLIST: &'static str = include_str!("../res/eff_large_wordlist.txt");
+/// The default number of words the passphrase will consist of.
+const DEFAULT_WORDS: usize = 5;
 
-/// Build a vector of words based on a wordlist to use for passphrase
-/// generation.
+/// The default separator used between passphrase words.
+const DEFAULT_SEPARATOR: &str = " ";
+
+use config::BasicConfig;
+use prelude::*;
+
+/// Zero-configuration passphrase generation helper
 ///
-/// The included wordlist is prefixed with dice numbers, each line ends with
-/// an actual word. This function grabs the last alphabetic word from each
-/// line which are then collected into a vector.
-pub fn words<'a>() -> Vec<&'a str> {
-    WORDLIST
-        .lines()
-        .filter_map(|line| line
-            .trim_right()
-            .rsplit_terminator(char::is_whitespace)
-            .next()
-        )
-        .collect()
-}
-
-/// Build a word sampler which is an iterator that randomly samples words from
-/// the included wordlist.
-/// 
-/// The word sampler is concidered cryptographically secure.
-pub fn word_sampler<'a>() -> WordSampler<'a> {
-    WordSampler::new(words())
-}
-
-/// Generate a secure passphrase with the given number of words.
-/// 
-/// It is recommended to use 4 or more words when possible.
+/// A quick way to generate a passphrase with no configuration.  
+/// Passphrases are based on the [defaults](::config::BasicConfig::default) of a
+/// [`BasicConfig`](::config::BasicConfig), detailed properties can be found in it's documentation.
 ///
-/// # Panics
-/// 
-/// The number of words must at least be 1.
-pub fn passphrase(words: usize) -> String {
-    if words == 0 {
-        panic!("it is not allowed to generate a passphrase with 0 words");
-    }
-
-    word_sampler()
-        .take(words)
-        .collect::<Vec<_>>()
-        .join(" ")
-}
-
-/// A word sampler iterator that provides random words from a given wordlist.
-/// The randomization is concidered cryptographically secure.
+/// Although this crate considers the used configuration secure, your project might have different
+/// requirements. It is therefore highly recommended however to set up your own configuration to
+/// meet your requirements. This can easily be done by choosing any of the configuration structs
+/// in the [`config`](::config) module such as [`BasicConfig`](config::BasicConfig), which has a
+/// [builder](config::BasicConfigBuilder) available.  
+/// Or build your own configuration type with support for converting it into a
+/// [`Scheme`](scheme::Scheme) by implementing the [`ToScheme`](scheme::ToScheme) trait.
 ///
-/// As much words as needed may be pulled from this iterator.
-pub struct WordSampler<'a> {
-    /// List of words that is used for sampling.
-    words: Vec<&'a str>,
-
-    /// Random distribution used for sampling.
-    distribution: Uniform<usize>,
-
-    /// Random number generator used for sampling.
-    rng: ThreadRng,
-}
-
-impl<'a> WordSampler<'a> {
-    /// Build a new word sampler which samples the given word list.
-    pub fn new(words: Vec<&'a str>) -> WordSampler<'a> {
-        WordSampler {
-            distribution: Uniform::new(0, words.len()),
-            words,
-            rng: thread_rng(),
-        }
-    }
-}
-
-impl<'a> Iterator for WordSampler<'a> {
-    type Item = &'a str;
-
-    /// Sample the next random word.
-    /// This iterator is infinite and always returns some word.
-    fn next(&mut self) -> Option<&'a str> {
-        let i = self.rng.sample(self.distribution);
-        Some(self.words[i])
-    }
+/// A configuration instance is created each time this method is invoked. For generating multiple
+/// passphrases it is recommended to build a [`Scheme`](scheme::Scheme) instead as it's much more
+/// performant.
+///
+/// # Entropy
+///
+/// To figure out what entropy these passphrases have, use:
+///
+/// ```rust
+/// extern crate chbs;
+/// use chbs::{config::BasicConfig, prelude::*};
+///
+/// let entropy = BasicConfig::default().to_scheme().entropy();
+/// println!("passphrase() entropy: {:?}", entropy);
+/// ```
+pub fn passphrase() -> String {
+    BasicConfig::default().to_scheme().generate()
 }
 
 #[cfg(test)]
 mod tests {
-    use {passphrase, words, WordSampler, word_sampler};
+    use passphrase;
 
     /// How many times to iterate for small or infinite tests.
     const ITERS: usize = 32;
 
-    /// We must have words to use.
+    /// Generating a passphrase must produce a string of at least 10 characters.
     #[test]
-    fn any_words() {
-        assert!(!words().is_empty());
-    }
-
-    /// Words must at least be 3 characters long.
-    #[test]
-    fn no_short_words() {
-        assert!(words().iter().all(|word| word.len() >= 3));
-    }
-
-    /// Words must only contain alphabetical characters or a hyphen.
-    #[test]
-    fn all_alpha_hyphen_words() {
+    fn passphrase_len() {
         assert!(
-            words().iter().all(|word|
-                word.chars().all(|c|
-                    c.is_alphabetic() || c == '-'
-                )
-            )
+            passphrase().len() >= 10,
+            "passphrase generated by defaults helper is too short"
         );
     }
 
-    /// Generating a passphrase must produce the correct number of words.
+    /// Repeatedly generating passphrases should produce somewhat unique results.
     #[test]
-    fn passphrase_words() {
-        for i in 1..=ITERS {
-            assert_eq!(passphrase(i).split(char::is_whitespace).count(), i);
-        }
-    }
+    fn passphrase_unique() {
+        // Generate phrases with helper and dedup
+        let mut phrases: Vec<String> = (1..=ITERS).map(|_| passphrase()).collect();
+        phrases.dedup();
 
-    /// Generating a passphrase with 0 words should panic.
-    #[test]
-    #[should_panic]
-    fn empty_passphrase_panic() {
-        passphrase(0);
-    }
-
-    /// Ensure a word sampler is able to produce words.:w
-    /// This test only covers a limited number of checks as the sampler
-    /// itself is infinite.
-    #[test]
-    fn word_sampler_produces() {
-        assert_eq!(
-            word_sampler()
-                .take(ITERS)
-                .count(),
-            ITERS,
-        );
-    }
-
-    /// Ensure a word sampler produces words that are in the word list.
-    /// This test only covers a limited number of checks as the sampler
-    /// itself is infinite.
-    #[test]
-    fn word_sampler_known_words() {
-        // Get a list of words, and build a sampler
-        let words = words();
-        let sampler = WordSampler::new(words.clone());
-
-        assert_eq!(
-            sampler
-                .take(ITERS)
-                .filter(|word| words.contains(word))
-                .count(),
-            ITERS,
-        );
+        // There must be at least 2 unique passphrases
+        assert!(phrases.len() > 1);
     }
 }

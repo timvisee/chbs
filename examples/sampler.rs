@@ -1,11 +1,19 @@
-//! An example on how to use the word sampler to generate random words based
-//! on the included wordlist.
+//! Sample passphrase words from a wordlist
+//!
+//! A minimal example that shows how a word sampler derived from a default wordlist may be used to
+//! uniformly sample a number of words.
+//!
+//! It is not recommended to manually use this logic for forming your own passphrases. The
+//! abstractions in [`Scheme`](scheme::Scheme) should be used for that possibly with a custom
+//! [`config`](config). It is however possible.
 
 extern crate chbs;
-use chbs::word_sampler;
+
+use chbs::word::WordList;
 
 fn main() {
-    let sampler = word_sampler();
+    let words = WordList::default();
+    let sampler = words.sampler();
 
     for word in sampler.take(8) {
         println!("Sampled word: {:?}", word);
