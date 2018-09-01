@@ -109,7 +109,7 @@ impl WordList {
     /// ```
     pub fn load<P>(path: P) -> Result<Self, WordListError>
     where
-        P: AsRef<Path>
+        P: AsRef<Path>,
     {
         // Load all words, error if empty
         let words: Vec<String> = read_to_string(path)?
@@ -159,7 +159,7 @@ impl WordList {
     /// ```
     pub fn load_diced<P>(path: P) -> Result<Self, WordListError>
     where
-        P: AsRef<Path>
+        P: AsRef<Path>,
     {
         // Load all words, error if emtpy
         let words: Vec<String> = read_to_string(path)?

@@ -64,7 +64,13 @@ pub struct Scheme {
 }
 
 impl Scheme {
-    /// Construct a new password scheme based on the given set of components.
+    /// Construct a scheme with the given components
+    ///
+    /// When all components for a scheme are collected, a scheme can be constructed using this
+    /// method.
+    ///
+    /// If you prefer the builder pattern to build a scheme, use [`SchemeBuilder`](SchemeBuilder)
+    /// instead.
     pub fn new(
         word_set_provider: Box<dyn WordSetProvider>,
         word_stylers: Vec<Box<dyn WordStyler>>,
