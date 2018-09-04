@@ -65,18 +65,18 @@ Here is what is required for passphrase generation:
   for other kinds any number is fine:
     1.  `WordSetProvider` (`1` required): provides a list of words to use in
         a passphrase.
-    2. `WordStyler` (`>=0` required): styles passphrase words, for example, to
+    2.  `WordStyler` (`>=0` required): styles passphrase words, for example, to
         capitalize.
-    3. `PhraseBuilder` (`1` required): builds a phrase from a set of passphrase
+    3.  `PhraseBuilder` (`1` required): builds a phrase from a set of passphrase
         words.
-    4. `PhraseStyler` (`>=0` required): styles a whole passphrase.
+    4.  `PhraseStyler` (`>=0` required): styles a whole passphrase.
 
 Things to understand:
 - Passphrase generation schemes are commonly created by using a configuration
   structure. Such as structure will provide various configurable fields, and
   builds a corresponding scheme based on it for passphrase generation.
 
-How passphrases are usually generated:
+The usual steps for generating a passphrase:
 - A configuration structure is built and configured, such as `BasicConfig`.
 - The configuration struct creates a corresponding passphrase generation scheme.
 - The scheme is used to generate as many passphrases as needed.
@@ -84,8 +84,9 @@ How passphrases are usually generated:
   with zero configuration for ease of use.
 
 See, it isn't too difficult, but allows great extensibility. You probably won't
-use most of what this crate provides. Take a look at `BasicConfig` to see how to
-configure your first passphrase generator.
+use most of what this crate provides.  
+Take a look at `BasicConfig` to see how to configure your first passphrase
+generator.
 
 Additional good-to-know things:
 - This crate provides a selection of components for specific tasks, custom

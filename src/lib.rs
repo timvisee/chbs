@@ -45,44 +45,47 @@
 //! important to understand how the concepts used in this crate work.
 //!
 //! Here is what is required for passphrase generation:
-//! - A `Scheme` defines how a passphrase is generated. Passphrases are only
+//! - A [`Scheme`](scheme::Scheme) defines how a passphrase is generated. Passphrases are only
 //!   generated through a scheme.
-//! - A `Scheme` contains components which represents how the passphrase is built up and
-//!   styled. Four kinds of components exist, defining the passphrase generation
+//! - A [`Scheme`](scheme::Scheme) contains components which represents how the passphrase is built
+//!   up and styled. Four kinds of components exist, defining the passphrase generation
 //!   steps. For some kinds one must be defined,
 //!   for other kinds any number is fine:
-//!     1.  `WordSetProvider` (`1` required): provides a list of words to use in
-//!         a passphrase.
-//!     2. `WordStyler` (`>=0` required): styles passphrase words, for example, to
-//!         capitalize.
-//!     3. `PhraseBuilder` (`1` required): builds a phrase from a set of passphrase
-//!         words.
-//!     4. `PhraseStyler` (`>=0` required): styles a whole passphrase.
+//!     1.  [`WordSetProvider`](component::traits::WordSetProvider) (`1` required):
+//!         provides a list of words to use in a passphrase.
+//!     2.  [`WordStyler`](component::traits::WordStyler) (`>=0` required):
+//!         styles passphrase words, for example, to capitalize.
+//!     3.  [`PhraseBuilder`](component::traits::PhraseBuilder) (`1` required):
+//!         builds a phrase from a set of passphrase words.
+//!     4.  [`PhraseStyler`](component::traits::PhraseBuilder) (`>=0` required):
+//!         styles a whole passphrase.
 //!
 //! Things to understand:
 //! - Passphrase generation schemes are commonly created by using a configuration
 //!   structure. Such as structure will provide various configurable fields, and
 //!   builds a corresponding scheme based on it for passphrase generation.
 //!
-//! How passphrases are usually generated:
-//! - A configuration structure is built and configured, such as `BasicConfig`.
+//! The usual steps for generating a passphrase:
+//! - A configuration structure is built and configured,
+//!   such as [`BasicConfig`](config::BasicConfig).
 //! - The configuration struct creates a corresponding passphrase generation scheme.
 //! - The scheme is used to generate as many passphrases as needed.
-//! - Instead, the `passphrase()` helper method may be used to generate a passphrase
+//! - Instead, the [`passphrase()`](passphrase) helper method may be used to generate a passphrase
 //!   with zero configuration for ease of use.
 //!
 //! See, it isn't too difficult, but allows great extensibility. You probably won't
-//! use most of what this crate provides. Take a look at `BasicConfig` to see how to
-//! configure your first passphrase generator.
+//! use most of what this crate provides.  
+//! Take a look at [`BasicConfig`](config::BasicConfig) to see how to configure your first
+//! passphrase generator.
 //!
 //! Additional good-to-know things:
 //! - This crate provides a selection of components for specific tasks, custom
 //!   components may be built.
-//! - This crate provides a `WordList` struct to hold a static wordlist, that may
-//!   use a built-in wordlist or loads a wordlist from a specified file.
-//! - A `WordSampler` may be constructed based on a `WordList` to allow randomized
-//!   word sampling in an uniform manner. Such a sampler is usually what is used as
-//!   word provider in a configuration struct.
+//! - This crate provides a [`WordList`](word::WordList) struct to hold a static wordlist,
+//!   that may use a built-in wordlist or loads a wordlist from a specified file.
+//! - A [`WordSampler`](word::WordSampler) may be [constructed](word::WordSampler::sampler) based
+//!   on a [`WordList`](word::WordList) to allow randomized word sampling in an uniform manner.
+//!   Such a sampler is usually what is used as word provider in a configuration struct.
 //!
 //! ## Examples
 //! Here are some basic examples on how to use this crate.
