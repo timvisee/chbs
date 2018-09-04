@@ -1,3 +1,7 @@
+//! Component kind traits
+//!
+//! The function of this trait is defined in the [`component`](super) module.
+
 use std::fmt::Debug;
 
 use prelude::*;
@@ -11,6 +15,11 @@ use prelude::*;
 ///
 /// When generating a passphrase a set of words is obtained from a word provider by subsequent
 /// calls to [`word`](WordProvider::word).
+///
+/// This trait is not used as component kind on [`Scheme`](::scheme::Scheme), it may however be
+/// useful to implement on types that support this functionallity. In addition to that, the
+/// [`WordSetProvider`](WordSetProvider) should be easy to implement on types that implement this
+/// trait.
 pub trait WordProvider: HasEntropy + Debug + Iterator<Item = String> + Clone {
     /// Obtain a random word.
     ///
@@ -26,7 +35,8 @@ pub trait WordProvider: HasEntropy + Debug + Iterator<Item = String> + Clone {
 /// password.
 ///
 /// This differs from [`WordProvider`](WordProvider) as this provides a set of words instead of a
-/// single word.
+/// single word. It should be fairly easy to implement this trait on types that have the
+/// [`WordProvider`](WordProvider) implemented.
 pub trait WordSetProvider: HasEntropy + Debug {
     /// Source a set of random passphrase words to use in a passphrase.
     fn words(&mut self) -> Vec<String>;

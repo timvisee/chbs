@@ -1,3 +1,11 @@
+//! Generation scheme module to define how to generate passphrases
+//!
+//! This module defines the [`Scheme`](Scheme) type, with a corresponding [build](SchemeBuilder) if
+//! that pattern is desired.
+//!
+//! As both provided and custom structures may produce a [`Scheme`](Scheme) for passphrase
+//! generation, the [`ToScheme`](ToScheme) trait is used for a generic way of doing this.
+
 use entropy::Entropy;
 use prelude::*;
 

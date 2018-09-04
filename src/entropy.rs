@@ -1,3 +1,12 @@
+//! Passphrase entropy related structures
+//!
+//! This module provides the [`Entropy`](Entropy) type that is used to define passphrase generation
+//! entropy. [Components](::component) use this type to accumulate their entropy for a final total.
+//!
+//! The [`HasEntropy`](HasEntropy) trait may be implemented on types that provide some sort of
+//! entropy. Implementing this is required on [components](::component) to allow entropy
+//! calculation on a configured [`Scheme`](::scheme::Scheme).
+
 use std::{
     fmt::{self, Display, Formatter},
     iter::Sum,

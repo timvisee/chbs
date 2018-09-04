@@ -1,3 +1,15 @@
+//! Provided structures to easily configure passphrase generation [schemes](::scheme::Scheme)
+//!
+//! This module contains various configuration structures that allow easy configuring of a
+//! [`Scheme`](::scheme::Scheme) used to define how passphrases are generated.
+//!
+//! These predefined configuration structures use a predefined set of [components](::component) and
+//! support configurability through struct fields. All configuration strucutres have a matching
+//! builder to use if you prefer to use the builder pattern.
+//!
+//! The most basic configuration structure provides is [`BasicConfig`](BasicConfig), see it's
+//! documentation for information on how to use it and for some examples.
+
 use component::{
     phrase::BasicPhraseBuilder,
     word::{FixedWordSetProvider, WordCapitalizer},

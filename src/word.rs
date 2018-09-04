@@ -1,3 +1,16 @@
+//! Utilities for collecting and generating words for in a passphrase
+//!
+//! This module provides various constructs for collecting and/or generating words to use in a
+//! passphrase.
+//!
+//! The [`WordList`](WordList) structure is used for static wordlists, which may be uniformly
+//! sampled using a [`WordSampler`](WordSampler).
+//!
+//! Constants holding a static built-in wordlist are included so providing your own wordlist is not
+//! required, see the [`BUILTIN_`](#constants) constants.
+//! These lists can easily be loaded using the [`buildin_`](WordList) methods on
+//! [`WordList`](WordList).
+
 use std::fs::read_to_string;
 use std::io::Error as IoError;
 use std::path::Path;

@@ -1,3 +1,15 @@
+//! Passphrase word related components
+//!
+//! This module provides some component implementations for processing words.
+//! These components implement any of the following component kind traits:
+//!
+//! - [`WordSetProvider`](super::traits::WordSetProvider)
+//! - [`WordStyler`](super::traits::WordStyler)
+//!
+//! Most of these components are used by configuration strucutres provided by this crate, see
+//! the [`config`](::config) module. You may of course implement these components in your own
+//! configuration structures and [`Scheme`](::scheme::Scheme) definitions.
+
 use rand::thread_rng;
 
 use entropy::Entropy;
@@ -80,6 +92,10 @@ pub struct WordCapitalizer {
 }
 
 impl WordCapitalizer {
+    /// Construct the word capitalizer component
+    ///
+    /// Whehter to capitalize the first character or the whole word must be defined using the
+    /// `first` and `all` parameters.
     pub fn new(first: Probability, all: Probability) -> Self {
         Self { first, all }
     }

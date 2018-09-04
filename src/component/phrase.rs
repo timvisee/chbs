@@ -1,3 +1,15 @@
+//! Passphrase related components
+//!
+//! This module provides some component implementations for processing passphrases.
+//! These components implement any of the following component kind traits:
+//!
+//! - [`PhraseBuilder`](super::traits::PhraseBuilder)
+//! - [`PhraseStyler`](super::traits::PhraseStyler)
+//!
+//! Most of these components are used by configuration strucutres provided by this crate, see
+//! the [`config`](::config) module. You may of course implement these components in your own
+//! configuration structures and [`Scheme`](::scheme::Scheme) definitions.
+
 use entropy::Entropy;
 use prelude::*;
 

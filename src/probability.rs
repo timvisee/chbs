@@ -1,3 +1,13 @@
+//! Probability related strucutres
+//!
+//! This module provides the [`Probability`](Probability) type that is used to define the
+//! probability of something being true. This is commonly used in passphrase generation
+//! [components](::component) for randomisation of passphrase styling features.  
+//! For example, the [`WordCapitalizer`](::component::word::WordCapitalizer) uses this type in it's
+//! fields.
+//!
+//! See [`Probability`](Probability) for more details.
+
 use rand::{prelude::*, thread_rng};
 
 use entropy::Entropy;
