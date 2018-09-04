@@ -47,17 +47,17 @@
 //! Here is what is required for passphrase generation:
 //! - A `Scheme` defines how a passphrase is generated. Passphrases are only
 //!   generated through a scheme.
-//! - A `Scheme` contains components which define how the passphrase is built up and
+//! - A `Scheme` contains components which represents how the passphrase is built up and
 //!   styled. Four kinds of components exist, defining the passphrase generation
 //!   steps. For some kinds one must be defined,
 //!   for other kinds any number is fine:
-//!     - `WordSetProvider` (`1` required): provides a list of words to use in
-//!       a passphrase.
-//!     - `WordStyler` (`>=0` required): styles passphrase words, for example, to
-//!       capitalize.
-//!     - `PhraseBuilder` (`1` required): builds a phrase from a set of passphrase
-//!       words.
-//!     - `PhraseStyler` (`>=0` required): styles a whole passphrase.
+//!     1.  `WordSetProvider` (`1` required): provides a list of words to use in
+//!         a passphrase.
+//!     2. `WordStyler` (`>=0` required): styles passphrase words, for example, to
+//!         capitalize.
+//!     3. `PhraseBuilder` (`1` required): builds a phrase from a set of passphrase
+//!         words.
+//!     4. `PhraseStyler` (`>=0` required): styles a whole passphrase.
 //!
 //! Things to understand:
 //! - Passphrase generation schemes are commonly created by using a configuration
