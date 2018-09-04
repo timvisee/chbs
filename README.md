@@ -47,6 +47,8 @@ for generating secret passphrases[*](#additional-notes).
 ## Todo
 The following things need to be looked at before stabilization:
 
+* Builders have been temporarily removed due to an incompatibility,
+  fix this (#5e93987d).
 * Use secure strings?
 * Additional stylers and configuration options:
   * Add numbers
