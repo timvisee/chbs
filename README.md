@@ -107,7 +107,7 @@ Add `chbs` as dependency in your `Cargo.toml` first:
 
 ```toml
 [dependencies]
-chbs = "0.0.1"
+chbs = "0.0.2"
 ```
 
 Generate a passphrase with zero configuration using a helper function applying
