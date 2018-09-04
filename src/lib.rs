@@ -86,7 +86,7 @@
 //!   components may be built.
 //! - This crate provides a [`WordList`](word::WordList) struct to hold a static wordlist,
 //!   that may use a built-in wordlist or loads a wordlist from a specified file.
-//! - A [`WordSampler`](word::WordSampler) may be [constructed](word::WordSampler::sampler) based
+//! - A [`WordSampler`](word::WordSampler) may be [constructed](word::WordList::sampler) based
 //!   on a [`WordList`](word::WordList) to allow randomized word sampling in an uniform manner.
 //!   Such a sampler is usually what is used as word provider in a configuration struct.
 //!
@@ -192,8 +192,8 @@ use prelude::*;
 /// Zero-configuration passphrase generation helper
 ///
 /// A quick way to generate a passphrase with no configuration.  
-/// Passphrases are based on the [default](::config::BasicConfig::default) of a
-/// [`BasicConfig`](::config::BasicConfig), detailed properties can be found in it's documentation.
+/// Passphrases are based on the [default](config::BasicConfig::defaults) of a
+/// [`BasicConfig`](config::BasicConfig), detailed properties can be found in it's documentation.
 ///
 /// Although this crate considers the used configuration secure, your project might have different
 /// requirements. It is therefore highly recommended however to set up your own configuration to
