@@ -1,7 +1,6 @@
 //! Generation scheme module to define how to generate passphrases
 //!
-//! This module defines the [`Scheme`](Scheme) type, with a corresponding [build](SchemeBuilder) if
-//! that pattern is desired.
+//! This module defines the [`Scheme`](Scheme) type.
 //!
 //! As both provided and custom structures may produce a [`Scheme`](Scheme) for passphrase
 //! generation, the [`ToScheme`](ToScheme) trait is used for a generic way of doing this.
@@ -55,20 +54,19 @@ use prelude::*;
 /// scheme.take(8)
 ///     .for_each(|passphrase| println!("{}", passphrase));
 /// ```
-#[derive(Builder, Debug)]
-#[builder(pattern = "owned")]
+#[derive(Debug)]
 pub struct Scheme {
     /// A word set provider, which sources a set of random words to use in the passphrase.
-    word_set_provider: Box<dyn WordSetProvider>,
+    word_set_provider: Box<WordSetProvider>,
 
     /// A set of word stylers to apply to each passphrase word.
-    word_stylers: Vec<Box<dyn WordStyler>>,
+    word_stylers: Vec<Box<WordStyler>>,
 
     /// A phrase builder that builds a passphrase out of a styled set of passphrase words.
-    phrase_builder: Box<dyn PhraseBuilder>,
+    phrase_builder: Box<PhraseBuilder>,
 
     /// A set of phrase stylers to apply to each passphrase.
-    phrase_stylers: Vec<Box<dyn PhraseStyler>>,
+    phrase_stylers: Vec<Box<PhraseStyler>>,
 }
 
 impl Scheme {
@@ -76,14 +74,11 @@ impl Scheme {
     ///
     /// When all components for a scheme are collected, a scheme can be constructed using this
     /// method.
-    ///
-    /// If you prefer the builder pattern to build a scheme, use [`SchemeBuilder`](SchemeBuilder)
-    /// instead.
     pub fn new(
-        word_set_provider: Box<dyn WordSetProvider>,
-        word_stylers: Vec<Box<dyn WordStyler>>,
-        phrase_builder: Box<dyn PhraseBuilder>,
-        phrase_stylers: Vec<Box<dyn PhraseStyler>>,
+        word_set_provider: Box<WordSetProvider>,
+        word_stylers: Vec<Box<WordStyler>>,
+        phrase_builder: Box<PhraseBuilder>,
+        phrase_stylers: Vec<Box<PhraseStyler>>,
     ) -> Self {
         Self {
             word_set_provider,
@@ -147,28 +142,6 @@ impl Iterator for Scheme {
     /// This method always returns `Some` holding a passphrase.
     fn next(&mut self) -> Option<String> {
         Some(self.generate())
-    }
-}
-
-impl SchemeBuilder {
-    /// Add a single word styler to the scheme.
-    pub fn add_word_styler(mut self, styler: Box<WordStyler>) -> Self {
-        match self.word_stylers {
-            Some(ref mut stylers) => stylers.push(styler),
-            None => self.word_stylers = Some(vec![styler]),
-        }
-
-        self
-    }
-
-    /// Add a single phrase styler to the scheme.
-    pub fn add_phrase_styler(mut self, styler: Box<PhraseStyler>) -> Self {
-        match self.phrase_stylers {
-            Some(ref mut stylers) => stylers.push(styler),
-            None => self.phrase_stylers = Some(vec![styler]),
-        }
-
-        self
     }
 }
 

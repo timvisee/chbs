@@ -16,7 +16,7 @@ use component::{
 };
 use prelude::*;
 use probability::Probability;
-use scheme::{Scheme, SchemeBuilder};
+use scheme::Scheme;
 use word::{WordList, WordSampler};
 
 use super::{DEFAULT_SEPARATOR, DEFAULT_WORDS};
@@ -46,21 +46,7 @@ use super::{DEFAULT_SEPARATOR, DEFAULT_WORDS};
 /// // Generate and output
 /// println!("Passphrase: {}", scheme.generate());
 /// ```
-///
-/// Or use the [`BasicConfigBuilder`](BasicConfigBuilder) instead for a builder pattern:
-///
-/// ```rust
-/// // TODO: fix this example
-/// // extern crate chbs;
-/// // use chbs::{config::*, word::WordSampler};
-/// //
-/// // let config = BasicConfigBuilder::default()
-/// //     .separator("-")
-/// //     .build()
-/// //     .unwrap();
-/// ```
-#[derive(Builder, Clone, Debug)]
-#[builder(setter(into))]
+#[derive(Clone, Debug)]
 pub struct BasicConfig<P>
 where
     P: WordProvider,
@@ -101,16 +87,17 @@ where
     P: WordProvider + 'static,
 {
     fn to_scheme(&self) -> Scheme {
-        SchemeBuilder::default()
-            .word_set_provider(Box::new(FixedWordSetProvider::new(
+        Scheme::new(
+            Box::new(FixedWordSetProvider::new(
                 self.word_provider.clone(),
                 self.words,
-            ))).word_stylers(vec![Box::new(WordCapitalizer::new(
+            )),
+            vec![Box::new(WordCapitalizer::new(
                 self.capitalize_first,
                 self.capitalize_words,
-            ))]).phrase_builder(Box::new(BasicPhraseBuilder::new(self.separator.clone())))
-            .phrase_stylers(Vec::new())
-            .build()
-            .unwrap()
+            ))],
+            Box::new(BasicPhraseBuilder::new(self.separator.clone())),
+            vec![],
+        )
     }
 }

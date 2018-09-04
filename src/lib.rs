@@ -167,8 +167,6 @@
 //! [xkcd-img]: https://imgs.xkcd.com/comics/password_strength.png
 
 #[macro_use]
-extern crate derive_builder;
-#[macro_use]
 extern crate failure;
 extern crate rand;
 
@@ -199,7 +197,7 @@ use prelude::*;
 /// requirements. It is therefore highly recommended however to set up your own configuration to
 /// meet your requirements. This can easily be done by choosing any of the configuration structs
 /// in the [`config`](::config) module such as [`BasicConfig`](config::BasicConfig), which has a
-/// [builder](config::BasicConfigBuilder) available.  
+/// builder available.  
 /// Or build your own configuration type with support for converting it into a
 /// [`Scheme`](scheme::Scheme) by implementing the [`ToScheme`](scheme::ToScheme) trait.
 ///
