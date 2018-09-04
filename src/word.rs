@@ -61,7 +61,7 @@ pub const BUILTIN_EFF_GENERAL_SHORT: &str = include_str!("../res/eff/general_sho
 /// A wordlist.
 ///
 /// To load a built-in wordlist, checkout the methods on this struct prefixed with `builtin_`.  
-/// The default wordlist loaded when using [`default()`](WordList::default) uses
+/// The default wordlist loaded when using `default()` uses
 /// [`builtin_eff_large()`](WordList::builtin_eff_large).
 ///
 /// A loaded fixed wordlist which may be used as word provider for passphrase generation by
@@ -97,7 +97,7 @@ impl WordList {
     /// This loads a wordlist from a file at the given path, and constructs a `WordList`.
     ///
     /// - Words are splitted by any whitespace (including newlines),
-    ///   see [`char::is_whitespace`](char::is_whitespace)
+    ///   see `char::is_whitespace`
     /// - It assumes any non-whitespace character is part of a word
     /// - Whitespaces are omitted the final wordlist
     /// - Emtpy items are omitted
@@ -145,7 +145,7 @@ impl WordList {
     ///
     /// - Words are splitted by the newline character (`\n`).
     /// - Only the last word on each line is kept, terminated by any whitespace, see
-    ///   [`char::is_whitespace`](char::is_whitespace)
+    ///   `char::is_whitespace`
     /// - It assumes any non-whitespace character is part of a word
     /// - Prefixed words do not have to be dice numbers
     /// - Lines having a single word with no dice number prefix are included

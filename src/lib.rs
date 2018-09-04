@@ -97,7 +97,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! chbs = "0.0.2"
+//! chbs = "0.0.4"
 //! ```
 //!
 //! Generate a passphrase with zero configuration using a helper function applying
@@ -160,7 +160,7 @@
 //!
 //! ## License
 //! This project is released under the MIT license.
-//! Check out the [LICENSE](LICENSE) file for more information.
+//! Check out the `LICENSE` file for more information.
 //!
 //! [diceware]: https://en.wikipedia.org/wiki/Diceware
 //! [xkcd]: https://xkcd.com/936/
@@ -192,8 +192,8 @@ use prelude::*;
 /// Zero-configuration passphrase generation helper
 ///
 /// A quick way to generate a passphrase with no configuration.  
-/// Passphrases are based on the [default](config::BasicConfig::defaults) of a
-/// [`BasicConfig`](config::BasicConfig), detailed properties can be found in it's documentation.
+/// Passphrases are based on the `default()` of a [`BasicConfig`](config::BasicConfig),
+/// detailed properties can be found in it's documentation.
 ///
 /// Although this crate considers the used configuration secure, your project might have different
 /// requirements. It is therefore highly recommended however to set up your own configuration to
