@@ -23,5 +23,7 @@ categories = [
 gitlab = { repository = "timvisee/chbs", branch = "master" }
 
 [dependencies]
+# TODO: switch to 0.6 from crates.io when available
+derive_builder = { version = "*", git = "https://github.com/colin-kiegel/rust-derive-builder", rev = "6e83963" }
 failure = "0.1"
 rand = "0.5"

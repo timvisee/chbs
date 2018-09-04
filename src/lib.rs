@@ -35,8 +35,6 @@
 //! ## Todo
 //! The following things need to be looked at before stabilization:
 //!
-//! * Builders have been temporarily removed due to an incompatibility,
-//!   fix this (#5e93987d).
 //! * Use secure strings?
 //! * Additional stylers and configuration options:
 //!   * Add numbers
@@ -169,6 +167,8 @@
 //! [xkcd-img]: https://imgs.xkcd.com/comics/password_strength.png
 
 #[macro_use]
+extern crate derive_builder;
+#[macro_use]
 extern crate failure;
 extern crate rand;
 
@@ -199,7 +199,7 @@ use prelude::*;
 /// requirements. It is therefore highly recommended however to set up your own configuration to
 /// meet your requirements. This can easily be done by choosing any of the configuration structs
 /// in the [`config`](::config) module such as [`BasicConfig`](config::BasicConfig), which has a
-/// builder available.  
+/// [builder](config::BasicConfigBuilder) available.  
 /// Or build your own configuration type with support for converting it into a
 /// [`Scheme`](scheme::Scheme) by implementing the [`ToScheme`](scheme::ToScheme) trait.
 ///
