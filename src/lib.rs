@@ -1,3 +1,6 @@
+//! _Note: this crate is still a work in progress, APIs might change until
+//! stabilisation_
+//!
 //! # Rust library: Correct Horse Battery Staple
 //! A secure, easy to use, configurable and extendable passphrase generation library
 //! based on a wordlist, generally known as [diceware].
