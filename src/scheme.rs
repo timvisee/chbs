@@ -43,8 +43,7 @@ use prelude::*;
 ///
 /// # Examples
 ///
-/// The scheme implements [`Iterator`](std::iter::Iterator). You may easily generate many
-/// passphrases this way:
+/// The scheme implements `Iterator`. You may easily generate many passphrases this way:
 ///
 /// ```rust
 /// extern crate chbs;

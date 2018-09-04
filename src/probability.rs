@@ -103,8 +103,8 @@ impl Probability {
 
     /// Generate a cryptographically secure boolean for this probability.
     ///
-    /// This method obtains a cryptographically secure randomness source through
-    /// [`thread_rng`](rand::thread_rng) and generates a boolean through
+    /// This method obtains a cryptographically secure randomness source through `thread_rng`
+    /// provided by the `rand` crate and generates a boolean through
     /// [`gen_bool`](Probability::gen_bool).
     pub fn gen_bool_secure(self) -> bool {
         match self {
