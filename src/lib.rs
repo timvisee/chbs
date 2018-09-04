@@ -101,7 +101,7 @@
 //! ```
 //!
 //! Generate a passphrase with zero configuration using a helper function applying
-//! library defaults (`examples/passphrase.rs`):
+//! library defaults ([passphrase.rs](examples/passphrase.rs)):
 //!
 //! ```rust
 //! extern crate chbs;
@@ -113,7 +113,7 @@
 //! Run it using `cargo run --example passphrase`.
 //!
 //! Generating a passphrase with configuration is recommended, here is a basic
-//! example (`examples/passphrase_config.rs`):
+//! example ([`passphrase_config.rs`](examples/passphrase_config.rs)):
 //!
 //! ```rust
 //! extern crate chbs;
@@ -134,7 +134,7 @@
 //! Run it using `cargo run --example passphrase_config`.
 //!
 //! Use a word sampler to generate an infinite number of random words based on
-//! a wordlist (`examples/sampler.rs`):
+//! a wordlist ([sampler.rs](examples/sampler.rs)):
 //!
 //! ```rust
 //! extern crate chbs;
@@ -150,7 +150,7 @@
 //!
 //! Run it using `cargo run --example sampler`.
 //!
-//! See all examples in the `./examples` directory.
+//! See all examples in the [`./examples`](./examples) directory.
 //!
 //! ## Additional notes
 //! * This crate is still in development, and should thus be used with care
