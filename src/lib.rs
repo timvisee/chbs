@@ -97,7 +97,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! chbs = "0.0.6"
+//! chbs = "0.0.7"
 //! ```
 //!
 //! Generate a passphrase with zero configuration using a helper function applying

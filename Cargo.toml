@@ -1,6 +1,6 @@
 [package]
 name = "chbs"
-version = "0.0.6"
+version = "0.0.7"
 authors = ["Tim Visee <timvisee@gmail.com>"]
 license = "MIT"
 readme = "README.md"
