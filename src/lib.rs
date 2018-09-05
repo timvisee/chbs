@@ -1,47 +1,15 @@
 //! _Note: this crate is still a work in progress, APIs might change until
 //! stabilisation_
 //!
-//! # Rust library: Correct Horse Battery Staple
 //! A secure, easy to use, configurable and extendable passphrase generation library
 //! based on a wordlist, generally known as [diceware].
 //!
-//! [![xkcd-img]][xkcd]
-//!
-//! The name `chbs` is short for the well known "correct horse battery staple"
-//! password which originates from the [XKCD][xkcd] comic shown above.
-//!
-//! * [Features](#features)
-//! * [Requirements](#requirements)
-//! * [Todo](#todo)
-//! * [Concepts](#concepts)
-//! * [Examples](#examples)
-//! * [Additional notes](#additional-notes)
-//! * [License](#license)
+//! The crate name `chbs` is short for the well known "correct horse battery staple" password
+//! which originates from an [XKCD][xkcd] comic shown in the README [here][xkcd_comic].
 //!
 //! This library uses cryptographically secure randomization, and may be used
-//! for generating secret passphrases[*](#additional-notes).
-//!
-//! ## Features
-//! * Simple and secure passphrase generation
-//! * Configurable generation schemes to meet your requirements
-//! * Use built-in or custom wordlists
-//! * Calculate passphrase entropy
-//! * Easy to use abstracted API
-//! * Very extendable, to set it up it any way you like
-//!
-//! ## Requirements
-//! * Rust 1.26 or higher (with `std`)
-//!
-//! ## Todo
-//! The following things need to be looked at before stabilization:
-//!
-//! * Use secure strings?
-//! * Additional stylers and configuration options:
-//!   * Add numbers
-//!   * Add special characters
-//!   * Different separators
-//!   * Generated words (based on character sequences)
-//!   * Replace characters with similar looking sequences (`a` to `4`, `o` to `()`)
+//! for generating secret passphrases.
+//! Please refer to the [README][readme] for more information on security.
 //!
 //! ## Concepts
 //! As the passphrase generation system in this crate is thoroughly abstracted it is
@@ -91,17 +59,9 @@
 //!   Such a sampler is usually what is used as word provider in a configuration struct.
 //!
 //! ## Examples
-//! Here are some basic examples on how to use this crate.
-//!
-//! Add `chbs` as dependency in your `Cargo.toml` first:
-//!
-//! ```toml
-//! [dependencies]
-//! chbs = "0.0.8"
-//! ```
-//!
-//! Generate a passphrase with zero configuration using a helper function applying
-//! library defaults ([passphrase.rs](examples/passphrase.rs)):
+//! Here are two very basic examples.
+//! First to generate a passphrase with zero configuration using a helper function applying
+//! library defaults ([src][example_passphrase]):
 //!
 //! ```rust
 //! extern crate chbs;
@@ -110,10 +70,8 @@
 //! println!("Passphrase: {:?}", passphrase());
 //! ```
 //!
-//! Run it using `cargo run --example passphrase`.
-//!
 //! Generating a passphrase with configuration is recommended, here is a basic
-//! example ([`passphrase_config.rs`](examples/passphrase_config.rs)):
+//! example ([src][example_passphrase_config]):
 //!
 //! ```rust
 //! extern crate chbs;
@@ -131,40 +89,20 @@
 //! println!("Entropy: {:?}", scheme.entropy().bits());
 //! ```
 //!
-//! Run it using `cargo run --example passphrase_config`.
+//! More examples are available in the documentation throughout the crate,
+//! and in the [`./examples`][examples] directory.
 //!
-//! Use a word sampler to generate an infinite number of random words based on
-//! a wordlist ([sampler.rs](examples/sampler.rs)):
-//!
-//! ```rust
-//! extern crate chbs;
-//! use chbs::word::WordList;
-//!
-//! let words = WordList::default();
-//! let sampler = words.sampler();
-//!
-//! for word in sampler.take(8) {
-//!     println!("Sampled word: {:?}", word);
-//! }
-//! ```
-//!
-//! Run it using `cargo run --example sampler`.
-//!
-//! See all examples in the [`./examples`](./examples) directory.
-//!
-//! ## Additional notes
-//! * This crate is still in development, and should thus be used with care
-//! * No warranty is provided for the quality of the passwords or passphrases
-//!   generated through this library
-//! * Entropy calculations may be faulty at this moment
-//!
-//! ## License
-//! This project is released under the MIT license.
-//! Check out the `LICENSE` file for more information.
+//! ## More information
+//! Please reference to the [README][readme] in the [code repository][repo] for more information.
 //!
 //! [diceware]: https://en.wikipedia.org/wiki/Diceware
+//! [examples]: https://gitlab.com/timvisee/chbs/tree/master/examples
+//! [example_passphrase]: https://gitlab.com/timvisee/chbs/blob/master/examples/passphrase.rs
+//! [example_passphrase_config]: https://gitlab.com/timvisee/chbs/blob/master/examples/passphrase_config.rs
+//! [readme]: https://gitlab.com/timvisee/chbs/blob/master/README.md
+//! [repo]: https://gitlab.com/timvisee/chbs
 //! [xkcd]: https://xkcd.com/936/
-//! [xkcd-img]: https://imgs.xkcd.com/comics/password_strength.png
+//! [xkcd_comic]: https://gitlab.com/timvisee/chbs#rust-library-correct-horse-battery-staple
 
 #[macro_use]
 extern crate derive_builder;
