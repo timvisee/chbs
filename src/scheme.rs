@@ -97,6 +97,11 @@ impl Scheme {
         config.to_scheme()
     }
 
+    /// Construct a [`SchemeBuilder`](SchemeBuilder) for building a [`Scheme`](Scheme)
+    pub fn build() -> SchemeBuilder {
+        SchemeBuilder::default()
+    }
+
     /// Generate a single passphrase based on this scheme.
     pub fn generate(&mut self) -> String {
         // Generate the passphrase words
