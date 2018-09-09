@@ -8,8 +8,8 @@
 [crate-download-badge]: https://img.shields.io/crates/d/chbs.svg
 [crate-version-badge]: https://img.shields.io/crates/v/chbs.svg
 [crate-license-badge]: https://img.shields.io/crates/l/chbs.svg
-[docs]: https://docs.rs/rand
-[docs-badge]: https://docs.rs/rand/badge.svg
+[docs]: https://docs.rs/chbs
+[docs-badge]: https://docs.rs/chbs/badge.svg
 [gitlab-ci-link]: https://gitlab.com/timvisee/chbs/commits/master
 [gitlab-ci-master-badge]: https://gitlab.com/timvisee/chbs/badges/master/pipeline.svg
 
