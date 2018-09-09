@@ -1,5 +1,6 @@
 [![Build status on GitLab CI][gitlab-ci-master-badge]][gitlab-ci-link]
 [![Newest release on crates.io][crate-version-badge]][crate-link]
+[![Documentation][docs-badge]][docs]
 [![Number of downloads on crates.io][crate-download-badge]][crate-link]
 [![Project license][crate-license-badge]](LICENSE)
 
@@ -7,6 +8,8 @@
 [crate-download-badge]: https://img.shields.io/crates/d/chbs.svg
 [crate-version-badge]: https://img.shields.io/crates/v/chbs.svg
 [crate-license-badge]: https://img.shields.io/crates/l/chbs.svg
+[docs]: https://docs.rs/rand
+[docs-badge]: https://docs.rs/rand/badge.svg
 [gitlab-ci-link]: https://gitlab.com/timvisee/chbs/commits/master
 [gitlab-ci-master-badge]: https://gitlab.com/timvisee/chbs/badges/master/pipeline.svg
 
