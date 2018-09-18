@@ -61,6 +61,7 @@ impl Display for Entropy {
 }
 
 impl Sum for Entropy {
+    #[inline]
     fn sum<I>(iter: I) -> Self
     where
         I: Iterator,
@@ -77,6 +78,7 @@ macro_rules! derive_ops {
         impl $trait_<$type_> for $type_ {
             type Output = $type_;
 
+            #[inline]
             fn $method(self, $type_(b): $type_) -> $type_ {
                 let $type_(a) = self;
                 $type_(a.$method(&b))
@@ -90,6 +92,7 @@ macro_rules! derive_ops {
         {
             type Output = $type_;
 
+            #[inline]
             fn $method(self, b: B) -> $type_ {
                 let $type_(a) = self;
                 $type_(a.$method(&b.into()))
