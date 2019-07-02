@@ -25,4 +25,4 @@ gitlab = { repository = "timvisee/chbs", branch = "master" }
 [dependencies]
 derive_builder = "0.7"
 failure = "0.1"
-rand = "0.6"
+rand = "0.7"
