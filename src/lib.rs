@@ -162,7 +162,7 @@ pub fn passphrase() -> String {
 
 #[cfg(test)]
 mod tests {
-    use passphrase;
+    use super::passphrase;
 
     /// How many times to iterate for small or infinite tests.
     const ITERS: usize = 32;
