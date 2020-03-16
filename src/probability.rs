@@ -10,8 +10,8 @@
 
 use rand::{prelude::*, thread_rng};
 
-use entropy::Entropy;
-use prelude::*;
+use crate::entropy::Entropy;
+use crate::prelude::*;
 
 /// A probability definition.
 ///

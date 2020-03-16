@@ -12,9 +12,9 @@
 
 use rand::thread_rng;
 
-use entropy::Entropy;
-use prelude::*;
-use probability::Probability;
+use crate::entropy::Entropy;
+use crate::prelude::*;
+use crate::probability::Probability;
 
 /// A generator providing a fixed number of passphrase words.
 ///
@@ -69,11 +69,7 @@ where
     P: WordProvider,
 {
     fn words(&mut self) -> Vec<String> {
-        self.provider
-            .by_ref()
-            .take(self.words)
-            .map(|word| word.to_owned())
-            .collect()
+        self.provider.by_ref().take(self.words).collect()
     }
 }
 

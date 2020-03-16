@@ -17,8 +17,8 @@ use std::path::Path;
 
 use rand::{distributions::Uniform, prelude::*, rngs::ThreadRng, thread_rng};
 
-use entropy::Entropy;
-use prelude::*;
+use crate::entropy::Entropy;
+use crate::prelude::*;
 
 /// The built-in EFF large wordlist words.
 ///

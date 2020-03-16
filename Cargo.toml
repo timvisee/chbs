@@ -18,6 +18,7 @@ keywords = [
 categories = [
     "cryptography",
 ]
+edition = "2018"
 
 [badges]
 gitlab = { repository = "timvisee/chbs", branch = "master" }

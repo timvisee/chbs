@@ -4,7 +4,7 @@
 
 use std::fmt::Debug;
 
-use prelude::*;
+use crate::prelude::*;
 
 /// Something that provides random words.
 ///

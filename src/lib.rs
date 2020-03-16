@@ -124,8 +124,8 @@ const DEFAULT_WORDS: usize = 5;
 /// The default separator used between passphrase words.
 const DEFAULT_SEPARATOR: &str = " ";
 
-use config::BasicConfig;
-use prelude::*;
+use crate::config::BasicConfig;
+use crate::prelude::*;
 
 /// Zero-configuration passphrase generation helper
 ///

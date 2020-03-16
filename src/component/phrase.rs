@@ -10,8 +10,8 @@
 //! the [`config`](::config) module. You may of course implement these components in your own
 //! configuration structures and [`Scheme`](::scheme::Scheme) definitions.
 
-use entropy::Entropy;
-use prelude::*;
+use crate::entropy::Entropy;
+use crate::prelude::*;
 
 /// A passphrase builder with as constant word separator.
 ///

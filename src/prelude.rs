@@ -15,6 +15,6 @@
 //! let scheme = config.to_scheme();
 //! ```
 
-pub use component::traits::*;
-pub use entropy::HasEntropy;
-pub use scheme::ToScheme;
+pub use crate::component::traits::*;
+pub use crate::entropy::HasEntropy;
+pub use crate::scheme::ToScheme;

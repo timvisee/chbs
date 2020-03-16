@@ -6,8 +6,8 @@
 //! As both provided and custom structures may produce a [`Scheme`](Scheme) for passphrase
 //! generation, the [`ToScheme`](ToScheme) trait is used for a generic way of doing this.
 
-use entropy::Entropy;
-use prelude::*;
+use crate::entropy::Entropy;
+use crate::prelude::*;
 
 /// A passphrase generation scheme.
 ///
@@ -156,7 +156,7 @@ impl Iterator for Scheme {
 
 impl SchemeBuilder {
     /// Add a single word styler to the scheme.
-    pub fn add_word_styler(mut self, styler: Box<WordStyler>) -> Self {
+    pub fn add_word_styler(mut self, styler: Box<dyn WordStyler>) -> Self {
         match self.word_stylers {
             Some(ref mut stylers) => stylers.push(styler),
             None => self.word_stylers = Some(vec![styler]),
@@ -166,7 +166,7 @@ impl SchemeBuilder {
     }
 
     /// Add a single phrase styler to the scheme.
-    pub fn add_phrase_styler(mut self, styler: Box<PhraseStyler>) -> Self {
+    pub fn add_phrase_styler(mut self, styler: Box<dyn PhraseStyler>) -> Self {
         match self.phrase_stylers {
             Some(ref mut stylers) => stylers.push(styler),
             None => self.phrase_stylers = Some(vec![styler]),

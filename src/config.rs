@@ -10,14 +10,14 @@
 //! The most basic configuration structure provides is [`BasicConfig`](BasicConfig), see it's
 //! documentation for information on how to use it and for some examples.
 
-use component::{
+use crate::component::{
     phrase::BasicPhraseBuilder,
     word::{FixedWordSetProvider, WordCapitalizer},
 };
-use prelude::*;
-use probability::Probability;
-use scheme::{Scheme, SchemeBuilder};
-use word::{WordList, WordSampler};
+use crate::prelude::*;
+use crate::probability::Probability;
+use crate::scheme::{Scheme, SchemeBuilder};
+use crate::word::{WordList, WordSampler};
 
 use super::{DEFAULT_SEPARATOR, DEFAULT_WORDS};
 
@@ -105,10 +105,12 @@ where
             .word_set_provider(Box::new(FixedWordSetProvider::new(
                 self.word_provider.clone(),
                 self.words,
-            ))).word_stylers(vec![Box::new(WordCapitalizer::new(
+            )))
+            .word_stylers(vec![Box::new(WordCapitalizer::new(
                 self.capitalize_first,
                 self.capitalize_words,
-            ))]).phrase_builder(Box::new(BasicPhraseBuilder::new(self.separator.clone())))
+            ))])
+            .phrase_builder(Box::new(BasicPhraseBuilder::new(self.separator.clone())))
             .phrase_stylers(Vec::new())
             .build()
             .unwrap()
