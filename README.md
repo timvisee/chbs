@@ -45,7 +45,7 @@ for generating secret passphrases[*](#additional-notes).
 * Very extendable, to set it up it any way you like
 
 ## Requirements
-* Rust 1.36 or higher (with `std`)
+* Rust 1.39 or higher (with `std`)
 
 ## Todo
 The following things need to be looked at before stabilization:

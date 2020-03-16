@@ -34,6 +34,10 @@ rust-nightly:
   <<: *check-base
   variables:
     RUST_VERSION: nightly
+rust-old:
+  <<: *check-base
+  variables:
+    RUST_VERSION: "1.39.0"
 
 # Build using Rust stable
 build:
