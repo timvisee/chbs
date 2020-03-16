@@ -1,7 +1,7 @@
 [package]
 name = "chbs"
-version = "0.0.9"
-authors = ["Tim Visee <timvisee@gmail.com>"]
+version = "0.0.10"
+authors = ["Tim Visee <3a4fb3964f@sinenomine.email>"]
 license = "MIT"
 readme = "README.md"
 homepage = "https://gitlab.com/timvisee/chbs"
