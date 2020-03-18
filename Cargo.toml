@@ -27,3 +27,6 @@ gitlab = { repository = "timvisee/chbs", branch = "master" }
 derive_builder = "0.9"
 failure = "0.1"
 rand = "0.7"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
