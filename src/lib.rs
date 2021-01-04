@@ -169,6 +169,7 @@ mod tests {
     use super::config::BasicConfig;
     use super::passphrase;
     use super::scheme::{Scheme, ToScheme};
+    use super::word::WordList;
 
     /// How many times to iterate for small or infinite tests.
     const ITERS: usize = 32;
@@ -191,6 +192,14 @@ mod tests {
 
         // There must be at least 2 unique passphrases
         assert!(phrases.len() > 1);
+    }
+
+    #[test]
+    fn sampler_into_iterator() {
+        let words = WordList::default();
+        let iterator = words.sampler().into_iter();
+        let result: Vec<String> = iterator.take(8).collect();
+        assert_eq!(8, result.len());
     }
 
     #[test]

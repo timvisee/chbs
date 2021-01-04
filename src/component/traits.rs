@@ -20,7 +20,7 @@ use crate::prelude::*;
 /// useful to implement on types that support this functionallity. In addition to that, the
 /// [`WordSetProvider`](WordSetProvider) should be easy to implement on types that implement this
 /// trait.
-pub trait WordProvider: HasEntropy + Debug + Clone + Send + Sync {
+pub trait WordProvider: HasEntropy + Debug + Clone + IntoIterator<Item = String> + Send + Sync {
     /// Obtain a random word.
     ///
     /// This method should obtain and return a random word from the provider.

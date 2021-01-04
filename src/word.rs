@@ -326,3 +326,23 @@ impl HasEntropy for WordSampler {
     }
 }
 
+impl IntoIterator for WordSampler {
+    type Item = String;
+    type IntoIter = WordSamplerIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        WordSamplerIter { sampler: self }
+    }
+}
+
+pub struct WordSamplerIter {
+    sampler: WordSampler,
+}
+
+impl Iterator for WordSamplerIter {
+    type Item = String;
+
+    fn next(&mut self) -> Option<String> {
+        Some(self.sampler.word())
+    }
+}
