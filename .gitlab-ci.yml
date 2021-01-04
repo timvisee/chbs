@@ -24,24 +24,43 @@ before_script:
   script:
     - cargo check --verbose
     - cargo test --verbose
-rust-stable:
+check-stable:
   <<: *check-base
-rust-beta:
+check-beta:
   <<: *check-base
   variables:
     RUST_VERSION: beta
-rust-nightly:
+check-nightly:
   <<: *check-base
   variables:
     RUST_VERSION: nightly
-rust-old:
+check-old:
   <<: *check-base
   variables:
     RUST_VERSION: "1.39.0"
+check-macos-stable:
+  tags:
+    - macos
+  only:
+    - master
+    - /^v(\d+\.)*\d+$/
+  <<: *check-base
 
 # Build using Rust stable
 build:
   stage: build
+  script:
+    - cargo build --release --verbose
+
+# Build using Rust stable on macOS
+build-macos:
+  stage: build
+  tags:
+    - macos
+  only:
+    - master
+    - /^v(\d+\.)*\d+$/
+  needs: []
   script:
     - cargo build --release --verbose
 
