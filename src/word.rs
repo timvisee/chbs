@@ -15,7 +15,7 @@ use std::fs::read_to_string;
 use std::io::Error as IoError;
 use std::path::Path;
 
-use rand::{distributions::Uniform, prelude::*, rngs::ThreadRng, thread_rng};
+use rand::{distributions::Uniform, prelude::*};
 
 use crate::entropy::Entropy;
 use crate::prelude::*;
@@ -293,9 +293,6 @@ pub struct WordSampler {
 
     /// Random distribution used for sampling.
     distribution: Uniform<usize>,
-
-    /// Random number generator used for sampling.
-    rng: ThreadRng,
 }
 
 impl WordSampler {
@@ -304,7 +301,6 @@ impl WordSampler {
         WordSampler {
             distribution: Uniform::new(0, words.len()),
             words,
-            rng: thread_rng(),
         }
     }
 
@@ -314,7 +310,7 @@ impl WordSampler {
     /// [`word`](WordSampler::word) as it prevents cloning the chosen word.
     fn word_ref(&mut self) -> &str {
         // Used instead of `rng.choose` for better performance
-        &self.words[self.rng.sample(self.distribution)]
+        &self.words[rand::thread_rng().sample(self.distribution)]
     }
 }
 

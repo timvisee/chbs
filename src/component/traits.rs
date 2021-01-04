@@ -20,7 +20,7 @@ use crate::prelude::*;
 /// useful to implement on types that support this functionallity. In addition to that, the
 /// [`WordSetProvider`](WordSetProvider) should be easy to implement on types that implement this
 /// trait.
-pub trait WordProvider: HasEntropy + Debug + Iterator<Item = String> + Clone {
+pub trait WordProvider: HasEntropy + Debug + Iterator<Item = String> + Clone + Send {
     /// Obtain a random word.
     ///
     /// This method should obtain and return a random word from the provider.
@@ -37,26 +37,26 @@ pub trait WordProvider: HasEntropy + Debug + Iterator<Item = String> + Clone {
 /// This differs from [`WordProvider`](WordProvider) as this provides a set of words instead of a
 /// single word. It should be fairly easy to implement this trait on types that have the
 /// [`WordProvider`](WordProvider) implemented.
-pub trait WordSetProvider: HasEntropy + Debug {
+pub trait WordSetProvider: HasEntropy + Debug + Send {
     /// Source a set of random passphrase words to use in a passphrase.
     fn words(&mut self) -> Vec<String>;
 }
 
 /// Something that provides logic to _style_ each passphrase word.
 /// This could be used to build a styler for word capitalization.
-pub trait WordStyler: HasEntropy + Debug {
+pub trait WordStyler: HasEntropy + Debug + Send {
     /// Style the given `word`.
     fn style_word(&self, word: String) -> String;
 }
 
 /// Something that provides logic to combine a list of passphrase words into a passphrase.
-pub trait PhraseBuilder: HasEntropy + Debug {
+pub trait PhraseBuilder: HasEntropy + Debug + Send {
     /// Build the passphrase from the given words, and combine them in one final passphrase.
     fn build_phrase(&self, words: Vec<String>) -> String;
 }
 
 /// Something that provides logic to _style_ a passphrase as a whole.
-pub trait PhraseStyler: HasEntropy + Debug {
+pub trait PhraseStyler: HasEntropy + Debug + Send {
     /// Style the given `phrase` as a whole.
     /// The styled passphrase is returned.
     fn style_phrase(&self, phrase: String) -> String;

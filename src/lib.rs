@@ -110,6 +110,9 @@ extern crate derive_builder;
 extern crate failure;
 extern crate rand;
 
+use crate::config::BasicConfig;
+use crate::prelude::*;
+
 pub mod component;
 pub mod config;
 pub mod entropy;
@@ -123,9 +126,6 @@ const DEFAULT_WORDS: usize = 5;
 
 /// The default separator used between passphrase words.
 const DEFAULT_SEPARATOR: &str = " ";
-
-use crate::config::BasicConfig;
-use crate::prelude::*;
 
 /// Zero-configuration passphrase generation helper
 ///
@@ -162,7 +162,13 @@ pub fn passphrase() -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::{Arc, mpsc::channel, mpsc::Sender, Mutex};
+    use std::sync::mpsc::RecvError;
+    use std::thread;
+
+    use super::config::BasicConfig;
     use super::passphrase;
+    use super::scheme::{Scheme, ToScheme};
 
     /// How many times to iterate for small or infinite tests.
     const ITERS: usize = 32;
@@ -185,5 +191,28 @@ mod tests {
 
         // There must be at least 2 unique passphrases
         assert!(phrases.len() > 1);
+    }
+
+    #[test]
+    fn threading() -> Result<(), RecvError> {
+        let scheme = Arc::new(Mutex::new(BasicConfig::default().to_scheme()));
+        let (tx, rx) = channel::<String>();
+
+        let handle1 = spawn_thread(scheme.clone(), tx.clone());
+        let handle2 = spawn_thread(scheme.clone(), tx.clone());
+
+        handle1.join().unwrap();
+        handle2.join().unwrap();
+        std::mem::drop(tx);
+
+        rx.recv()?;
+        rx.recv()?;
+        Ok(())
+    }
+
+    fn spawn_thread(scheme: Arc<Mutex<Scheme>>, tx: Sender<String>) -> thread::JoinHandle<()> {
+        thread::spawn(move || {
+            tx.send(scheme.lock().unwrap().generate()).unwrap();
+        })
     }
 }
