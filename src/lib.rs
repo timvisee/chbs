@@ -110,6 +110,9 @@ extern crate derive_builder;
 extern crate failure;
 extern crate rand;
 
+use crate::config::BasicConfig;
+use crate::prelude::*;
+
 pub mod component;
 pub mod config;
 pub mod entropy;
@@ -123,9 +126,6 @@ const DEFAULT_WORDS: usize = 5;
 
 /// The default separator used between passphrase words.
 const DEFAULT_SEPARATOR: &str = " ";
-
-use crate::config::BasicConfig;
-use crate::prelude::*;
 
 /// Zero-configuration passphrase generation helper
 ///
@@ -162,7 +162,14 @@ pub fn passphrase() -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::{Arc, mpsc::channel, mpsc::Sender};
+    use std::sync::mpsc::RecvError;
+    use std::thread;
+
+    use super::config::BasicConfig;
     use super::passphrase;
+    use super::scheme::{Scheme, ToScheme};
+    use super::word::WordList;
 
     /// How many times to iterate for small or infinite tests.
     const ITERS: usize = 32;
@@ -185,5 +192,36 @@ mod tests {
 
         // There must be at least 2 unique passphrases
         assert!(phrases.len() > 1);
+    }
+
+    #[test]
+    fn sampler_into_iterator() {
+        let words = WordList::default();
+        let iterator = words.sampler().into_iter();
+        let result: Vec<String> = iterator.take(8).collect();
+        assert_eq!(8, result.len());
+    }
+
+    #[test]
+    fn threading() -> Result<(), RecvError> {
+        let scheme = Arc::new(BasicConfig::default().to_scheme());
+        let (tx, rx) = channel::<String>();
+
+        let handle1 = spawn_thread(scheme.clone(), tx.clone());
+        let handle2 = spawn_thread(scheme.clone(), tx.clone());
+
+        handle1.join().unwrap();
+        handle2.join().unwrap();
+        std::mem::drop(tx);
+
+        rx.recv()?;
+        rx.recv()?;
+        Ok(())
+    }
+
+    fn spawn_thread(scheme: Arc<Scheme>, tx: Sender<String>) -> thread::JoinHandle<()> {
+        thread::spawn(move || {
+            tx.send(scheme.generate()).unwrap();
+        })
     }
 }

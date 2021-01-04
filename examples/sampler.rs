@@ -13,7 +13,7 @@ use chbs::word::WordList;
 
 fn main() {
     let words = WordList::default();
-    let sampler = words.sampler();
+    let sampler = words.sampler().into_iter();
 
     for word in sampler.take(8) {
         println!("Sampled word: {:?}", word);

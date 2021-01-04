@@ -15,7 +15,7 @@ use std::fs::read_to_string;
 use std::io::Error as IoError;
 use std::path::Path;
 
-use rand::{distributions::Uniform, prelude::*, rngs::ThreadRng, thread_rng};
+use rand::{distributions::Uniform, prelude::*};
 
 use crate::entropy::Entropy;
 use crate::prelude::*;
@@ -293,9 +293,6 @@ pub struct WordSampler {
 
     /// Random distribution used for sampling.
     distribution: Uniform<usize>,
-
-    /// Random number generator used for sampling.
-    rng: ThreadRng,
 }
 
 impl WordSampler {
@@ -304,7 +301,6 @@ impl WordSampler {
         WordSampler {
             distribution: Uniform::new(0, words.len()),
             words,
-            rng: thread_rng(),
         }
     }
 
@@ -312,14 +308,14 @@ impl WordSampler {
     ///
     /// This returns a cryptographically secure random word by reference, which is faster than
     /// [`word`](WordSampler::word) as it prevents cloning the chosen word.
-    fn word_ref(&mut self) -> &str {
+    fn word_ref(&self) -> &str {
         // Used instead of `rng.choose` for better performance
-        &self.words[self.rng.sample(self.distribution)]
+        &self.words[rand::thread_rng().sample(self.distribution)]
     }
 }
 
 impl WordProvider for WordSampler {
-    fn word(&mut self) -> String {
+    fn word(&self) -> String {
         self.word_ref().to_owned()
     }
 }
@@ -330,12 +326,23 @@ impl HasEntropy for WordSampler {
     }
 }
 
-impl Iterator for WordSampler {
+impl IntoIterator for WordSampler {
+    type Item = String;
+    type IntoIter = WordSamplerIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        WordSamplerIter { sampler: self }
+    }
+}
+
+pub struct WordSamplerIter {
+    sampler: WordSampler,
+}
+
+impl Iterator for WordSamplerIter {
     type Item = String;
 
-    /// Sample the next random word.
-    /// This iterator is infinite and always returns some word.
     fn next(&mut self) -> Option<String> {
-        Some(self.word())
+        Some(self.sampler.word())
     }
 }

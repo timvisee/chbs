@@ -68,8 +68,12 @@ impl<P> WordSetProvider for FixedWordSetProvider<P>
 where
     P: WordProvider,
 {
-    fn words(&mut self) -> Vec<String> {
-        self.provider.by_ref().take(self.words).collect()
+    fn words(&self) -> Vec<String> {
+        let mut res: Vec<String> = vec![];
+        for _ in 0..self.words {
+            res.push(self.provider.word());
+        }
+        res
     }
 }
 
