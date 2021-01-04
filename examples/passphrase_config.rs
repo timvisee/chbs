@@ -33,7 +33,7 @@ fn main() {
     config.capitalize_first = Probability::from(0.33);
     config.capitalize_words = Probability::half();
 
-    let mut scheme = config.to_scheme();
+    let scheme = config.to_scheme();
 
     println!("Passphrase: {:?}", scheme.generate());
     println!("Entropy: {:?}", scheme.entropy().bits());

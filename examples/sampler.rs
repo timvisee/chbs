@@ -10,12 +10,13 @@
 extern crate chbs;
 
 use chbs::word::WordList;
+use chbs::prelude::WordProvider;
 
 fn main() {
     let words = WordList::default();
     let sampler = words.sampler();
 
-    for word in sampler.take(8) {
-        println!("Sampled word: {:?}", word);
+    for _ in 0..8 {
+        println!("Sampled word: {:?}", sampler.word());
     }
 }

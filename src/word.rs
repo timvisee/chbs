@@ -308,14 +308,14 @@ impl WordSampler {
     ///
     /// This returns a cryptographically secure random word by reference, which is faster than
     /// [`word`](WordSampler::word) as it prevents cloning the chosen word.
-    fn word_ref(&mut self) -> &str {
+    fn word_ref(&self) -> &str {
         // Used instead of `rng.choose` for better performance
         &self.words[rand::thread_rng().sample(self.distribution)]
     }
 }
 
 impl WordProvider for WordSampler {
-    fn word(&mut self) -> String {
+    fn word(&self) -> String {
         self.word_ref().to_owned()
     }
 }
@@ -326,12 +326,3 @@ impl HasEntropy for WordSampler {
     }
 }
 
-impl Iterator for WordSampler {
-    type Item = String;
-
-    /// Sample the next random word.
-    /// This iterator is infinite and always returns some word.
-    fn next(&mut self) -> Option<String> {
-        Some(self.word())
-    }
-}

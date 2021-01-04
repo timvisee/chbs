@@ -103,7 +103,7 @@ impl Scheme {
     }
 
     /// Generate a single passphrase based on this scheme.
-    pub fn generate(&mut self) -> String {
+    pub fn generate(&self) -> String {
         // Generate the passphrase words
         let mut words = self.word_set_provider.words();
 

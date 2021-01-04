@@ -162,7 +162,7 @@ pub fn passphrase() -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, mpsc::channel, mpsc::Sender, Mutex};
+    use std::sync::{Arc, mpsc::channel, mpsc::Sender};
     use std::sync::mpsc::RecvError;
     use std::thread;
 
@@ -195,7 +195,7 @@ mod tests {
 
     #[test]
     fn threading() -> Result<(), RecvError> {
-        let scheme = Arc::new(Mutex::new(BasicConfig::default().to_scheme()));
+        let scheme = Arc::new(BasicConfig::default().to_scheme());
         let (tx, rx) = channel::<String>();
 
         let handle1 = spawn_thread(scheme.clone(), tx.clone());
@@ -210,9 +210,9 @@ mod tests {
         Ok(())
     }
 
-    fn spawn_thread(scheme: Arc<Mutex<Scheme>>, tx: Sender<String>) -> thread::JoinHandle<()> {
+    fn spawn_thread(scheme: Arc<Scheme>, tx: Sender<String>) -> thread::JoinHandle<()> {
         thread::spawn(move || {
-            tx.send(scheme.lock().unwrap().generate()).unwrap();
+            tx.send(scheme.generate()).unwrap();
         })
     }
 }
