@@ -24,7 +24,7 @@ edition = "2018"
 gitlab = { repository = "timvisee/chbs", branch = "master" }
 
 [dependencies]
-derive_builder = "0.9"
+derive_builder = "0.10"
 failure = "0.1"
 rand = "0.8"
 
