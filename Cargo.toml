@@ -20,9 +20,6 @@ categories = [
 ]
 edition = "2018"
 
-[badges]
-gitlab = { repository = "timvisee/chbs", branch = "master" }
-
 [dependencies]
 derive_builder = "0.10"
 failure = "0.1"
