@@ -7,8 +7,6 @@
 //! abstractions in [`Scheme`](scheme::Scheme) should be used for that possibly with a custom
 //! [`config`](config). It is however possible.
 
-extern crate chbs;
-
 use chbs::word::WordList;
 
 fn main() {

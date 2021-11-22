@@ -46,7 +46,6 @@ use crate::prelude::*;
 /// The scheme implements `Iterator`. You may easily generate many passphrases this way:
 ///
 /// ```rust
-/// extern crate chbs;
 /// use chbs::{config::BasicConfig, prelude::*, scheme::Scheme};
 ///
 /// let scheme = BasicConfig::default().to_scheme();

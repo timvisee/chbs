@@ -33,7 +33,6 @@ use super::{DEFAULT_SEPARATOR, DEFAULT_WORDS};
 /// generate a passphrase.
 ///
 /// ```rust
-/// extern crate chbs;
 /// use chbs::{config::BasicConfig, prelude::*};
 ///
 /// // Define the configuration

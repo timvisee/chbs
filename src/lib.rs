@@ -64,7 +64,6 @@
 //! library defaults ([src][example_passphrase]):
 //!
 //! ```rust
-//! extern crate chbs;
 //! use chbs::passphrase;
 //!
 //! println!("Passphrase: {:?}", passphrase());
@@ -74,7 +73,6 @@
 //! example ([src][example_passphrase_config]):
 //!
 //! ```rust
-//! extern crate chbs;
 //! use chbs::{config::BasicConfig, prelude::*, probability::Probability};
 //!
 //! // Build a custom configuration to:
@@ -150,7 +148,6 @@ const DEFAULT_SEPARATOR: &str = " ";
 /// To figure out what entropy these passphrases have, use:
 ///
 /// ```rust
-/// extern crate chbs;
 /// use chbs::{config::BasicConfig, prelude::*};
 ///
 /// let entropy = BasicConfig::default().to_scheme().entropy();
@@ -162,8 +159,8 @@ pub fn passphrase() -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, mpsc::channel, mpsc::Sender};
     use std::sync::mpsc::RecvError;
+    use std::sync::{mpsc::channel, mpsc::Sender, Arc};
     use std::thread;
 
     use super::config::BasicConfig;

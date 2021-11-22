@@ -11,8 +11,6 @@
 //! Note that this example prints the generated passphrase in the console,
 //! which might not be desired in most situations.
 
-extern crate chbs;
-
 use chbs::{config::BasicConfig, prelude::*, probability::Probability};
 
 fn main() {
