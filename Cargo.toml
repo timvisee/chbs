@@ -25,5 +25,8 @@ derive_builder = "0.10"
 failure = "0.1"
 rand = "0.8"
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = {version = "0.2", features = ["js"]}
+
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
