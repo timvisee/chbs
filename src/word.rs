@@ -12,9 +12,9 @@
 //! [`WordList`](WordList).
 
 use std::fs::read_to_string;
-use std::io::Error as IoError;
 use std::path::Path;
 
+use thiserror::Error;
 use rand::{distributions::Uniform, prelude::*};
 
 use crate::entropy::Entropy;
@@ -259,21 +259,15 @@ impl Default for WordList {
 }
 
 /// A [`WordList`](WordList) error.
-#[derive(Fail, Debug)]
+#[derive(Error, Debug)]
 pub enum WordListError {
     /// Failed to load a wordlist from a file.
-    #[fail(display = "failed to load wordlist from file")]
-    Load(#[cause] IoError),
+    #[error("failed to load wordlist from file")]
+    Load(#[from] std::io::Error),
 
     /// A loaded wordlist is emtpy, which is not allowed.
-    #[fail(display = "loaded wordlist did not contain words")]
+    #[error("loaded wordlist did not contain words")]
     Empty,
-}
-
-impl From<IoError> for WordListError {
-    fn from(err: IoError) -> WordListError {
-        WordListError::Load(err)
-    }
 }
 
 /// An iterator uniformly sampling words.

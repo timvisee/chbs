@@ -104,8 +104,6 @@
 
 #[macro_use]
 extern crate derive_builder;
-#[macro_use]
-extern crate failure;
 extern crate rand;
 
 use crate::config::BasicConfig;
