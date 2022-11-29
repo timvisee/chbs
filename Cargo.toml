@@ -21,7 +21,7 @@ categories = [
 edition = "2018"
 
 [dependencies]
-derive_builder = "0.10"
+derive_builder = "0.12"
 rand = "0.8"
 thiserror = "1.0.31"
 
