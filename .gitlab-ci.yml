@@ -38,29 +38,10 @@ check-old:
   <<: *check-base
   variables:
     RUST_VERSION: "1.42.0"
-check-macos-stable:
-  tags:
-    - macos
-  only:
-    - master
-    - /^v(\d+\.)*\d+$/
-  <<: *check-base
 
 # Build using Rust stable
 build:
   stage: build
-  script:
-    - cargo build --release --verbose
-
-# Build using Rust stable on macOS
-build-macos:
-  stage: build
-  tags:
-    - macos
-  only:
-    - master
-    - /^v(\d+\.)*\d+$/
-  needs: []
   script:
     - cargo build --release --verbose
 
